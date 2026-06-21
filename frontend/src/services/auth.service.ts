@@ -19,4 +19,6 @@ export const authService = {
   login: (email: string, password: string) =>
     apiClient.post<LoginResponse>('/auth/login', { email, password }),
   me: () => apiClient.get<AuthUser>('/auth/me'),
+  changePassword: (payload: { oldPassword: string; newPassword: string; confirmPassword: string }) =>
+    apiClient.post<{ changed: boolean }>('/auth/change-password', payload),
 };

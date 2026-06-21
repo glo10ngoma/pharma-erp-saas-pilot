@@ -18,6 +18,7 @@ export function DashboardLayout() {
         <h2>PharmaERP</h2>
         <nav style={{ display: 'grid', gap: 12 }}>
           <Link to="/dashboard">Dashboard</Link>
+          <Link to="/profile">Mon profil</Link>
           <Link to="/articles">Articles</Link>
           <Link to="/categories">Categories</Link>
           <Link to="/sub-categories">SubCategories</Link>

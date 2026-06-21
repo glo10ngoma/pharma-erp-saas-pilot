@@ -1,9 +1,10 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { AuthUser } from '../common/types/auth-user';
 import { AuthService } from './auth.service';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 
 @ApiTags('auth')
@@ -52,5 +53,15 @@ export class AuthController {
   })
   me(@CurrentUser() user: AuthUser) {
     return this.service.me(user);
+  }
+
+  @Post('change-password')
+  @ApiOperation({ summary: 'Changer le mot de passe utilisateur courant' })
+  @ApiOkResponse({
+    description: 'Mot de passe change. Le frontend doit deconnecter l utilisateur.',
+    schema: { example: { changed: true } },
+  })
+  changePassword(@CurrentUser() user: AuthUser, @Body() dto: ChangePasswordDto) {
+    return this.service.changePassword(user, dto);
   }
 }

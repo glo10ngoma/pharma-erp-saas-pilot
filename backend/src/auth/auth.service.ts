@@ -1,8 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { AuthUser } from '../common/types/auth-user';
 import { AuthRepository } from './auth.repository';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 
 @Injectable()
@@ -40,6 +41,26 @@ export class AuthService {
 
   me(user: AuthUser) {
     return this.toProfile(user);
+  }
+
+  async changePassword(user: AuthUser, dto: ChangePasswordDto) {
+    if (dto.newPassword !== dto.confirmPassword) {
+      throw new BadRequestException('PASSWORD_CONFIRMATION_MISMATCH');
+    }
+
+    const current = await this.repository.findActiveUserSecurityById(user.userId, user.tenantId);
+    if (!current) throw new UnauthorizedException('INVALID_CREDENTIALS');
+
+    const oldPasswordOk = await bcrypt.compare(dto.oldPassword, current.passwordHash);
+    if (!oldPasswordOk) throw new BadRequestException('INVALID_OLD_PASSWORD');
+
+    const samePassword = await bcrypt.compare(dto.newPassword, current.passwordHash);
+    if (samePassword) throw new BadRequestException('PASSWORD_REUSE_NOT_ALLOWED');
+
+    const passwordHash = await bcrypt.hash(dto.newPassword, 10);
+    await this.repository.updatePasswordHash(user.userId, user.tenantId, passwordHash);
+
+    return { changed: true };
   }
 
   private toProfile(user: AuthUser) {

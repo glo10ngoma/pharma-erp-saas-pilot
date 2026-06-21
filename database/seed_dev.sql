@@ -77,6 +77,8 @@ VALUES
   ('articles.create', 'Creer article', 'Articles', 'Creer un nouvel article', TRUE),
   ('articles.update', 'Modifier article', 'Articles', 'Modifier un article', TRUE),
   ('articles.delete', 'Desactiver article', 'Articles', 'Desactiver un article', TRUE),
+  ('attachments.read', 'Consulter pieces jointes', 'Attachments', 'Voir les pieces jointes', TRUE),
+  ('audit.read', 'Consulter audit', 'Audit', 'Voir les journaux audit', TRUE),
   ('categories.read', 'Consulter categories', 'Categories', 'Voir les categories', TRUE),
   ('categories.create', 'Creer categorie', 'Categories', 'Creer une categorie', TRUE),
   ('categories.update', 'Modifier categorie', 'Categories', 'Modifier une categorie', TRUE),
@@ -105,6 +107,7 @@ VALUES
   ('customers.create', 'Creer client', 'Customers', 'Creer un client', TRUE),
   ('customers.update', 'Modifier client', 'Customers', 'Modifier un client', TRUE),
   ('customers.delete', 'Desactiver client', 'Customers', 'Desactiver un client', TRUE),
+  ('disposals.read', 'Consulter sorties stock', 'Disposals', 'Voir les sorties stock', TRUE),
   ('purchases.read', 'Consulter achats', 'Purchases', 'Voir les achats', TRUE),
   ('purchases.create', 'Creer achat', 'Purchases', 'Creer un achat brouillon', TRUE),
   ('purchases.update_draft', 'Modifier achat brouillon', 'Purchases', 'Modifier un achat en brouillon', TRUE),
@@ -136,6 +139,8 @@ VALUES
   ('memberships.read', 'Consulter affiliations', 'Memberships', 'Voir les affiliations clients', TRUE),
   ('memberships.create', 'Creer affiliation', 'Memberships', 'Creer une affiliation client', TRUE),
   ('memberships.update', 'Modifier affiliation', 'Memberships', 'Modifier une affiliation client', TRUE),
+  ('notifications.read', 'Consulter notifications', 'Notifications', 'Voir les notifications', TRUE),
+  ('prescriptions.read', 'Consulter ordonnances', 'Prescriptions', 'Voir les ordonnances', TRUE),
   ('receivables.read', 'Consulter creances', 'Receivables', 'Voir les creances', TRUE),
   ('receivables.pay', 'Payer creance', 'Receivables', 'Enregistrer un paiement de creance', TRUE),
   ('inventories.read', 'Consulter inventaires', 'Inventories', 'Voir les inventaires physiques', TRUE),
@@ -172,7 +177,9 @@ VALUES
   ('sites.read', 'Consulter sites', 'Sites', 'Voir les sites du tenant', TRUE),
   ('sites.create', 'Creer site', 'Sites', 'Creer un site du tenant', TRUE),
   ('sites.update', 'Modifier site', 'Sites', 'Modifier un site du tenant', TRUE),
-  ('sites.delete', 'Desactiver site', 'Sites', 'Desactiver un site du tenant', TRUE)
+  ('sites.delete', 'Desactiver site', 'Sites', 'Desactiver un site du tenant', TRUE),
+  ('tenants.read', 'Consulter tenants', 'Tenants', 'Voir les tenants', TRUE),
+  ('transfers.read', 'Consulter transferts', 'Transfers', 'Voir les transferts', TRUE)
 ON CONFLICT (permission_code) DO UPDATE
 SET
   permission_name = EXCLUDED.permission_name,
@@ -197,9 +204,7 @@ ON CONFLICT (role_name) DO UPDATE
 SET
   tenant_id = EXCLUDED.tenant_id,
   description = EXCLUDED.description,
-  is_active = EXCLUDED.is_active
-WHERE roles.tenant_id = EXCLUDED.tenant_id
-   OR roles.tenant_id IS NULL;
+  is_active = EXCLUDED.is_active;
 
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.role_id, p.permission_id
@@ -210,6 +215,8 @@ JOIN permissions p ON p.permission_code IN (
   'articles.create',
   'articles.update',
   'articles.delete',
+  'attachments.read',
+  'audit.read',
   'categories.read',
   'categories.create',
   'categories.update',
@@ -238,6 +245,7 @@ JOIN permissions p ON p.permission_code IN (
   'customers.create',
   'customers.update',
   'customers.delete',
+  'disposals.read',
   'purchases.read',
   'purchases.create',
   'purchases.update_draft',
@@ -269,6 +277,8 @@ JOIN permissions p ON p.permission_code IN (
   'memberships.read',
   'memberships.create',
   'memberships.update',
+  'notifications.read',
+  'prescriptions.read',
   'receivables.read',
   'receivables.pay',
   'inventories.read',
@@ -305,7 +315,9 @@ JOIN permissions p ON p.permission_code IN (
   'sites.read',
   'sites.create',
   'sites.update',
-  'sites.delete'
+  'sites.delete',
+  'tenants.read',
+  'transfers.read'
 )
 WHERE t.tenant_code = 'DEMO'
   AND r.role_name = 'ADMIN'

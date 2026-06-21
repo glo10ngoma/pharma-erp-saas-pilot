@@ -81,4 +81,25 @@ export class AuthRepository {
       permissions: user.permissions ?? [],
     };
   }
+
+  async findActiveUserSecurityById(userId: string, tenantId: string): Promise<{ userId: string; passwordHash: string } | null> {
+    const result = await this.db.query<{ user_id: string; password_hash: string }>(
+      `SELECT user_id, password_hash
+       FROM users
+       WHERE user_id=$1 AND tenant_id=$2 AND is_active=true
+       LIMIT 1`,
+      [userId, tenantId],
+    );
+    const user = result.rows[0];
+    return user ? { userId: user.user_id, passwordHash: user.password_hash } : null;
+  }
+
+  async updatePasswordHash(userId: string, tenantId: string, passwordHash: string) {
+    await this.db.query(
+      `UPDATE users
+       SET password_hash=$3
+       WHERE user_id=$1 AND tenant_id=$2 AND is_active=true`,
+      [userId, tenantId, passwordHash],
+    );
+  }
 }

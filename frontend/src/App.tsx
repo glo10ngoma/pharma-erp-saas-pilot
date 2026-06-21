@@ -36,6 +36,7 @@ import { EntriesPage } from './modules/accounting/EntriesPage';
 import { GeneralLedgerPage } from './modules/accounting/GeneralLedgerPage';
 import { TrialBalancePage } from './modules/accounting/TrialBalancePage';
 import { ReportsDashboardPage } from './modules/reports/ReportsDashboardPage';
+import { ProfilePage } from './modules/profile/ProfilePage';
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ export function App() {
           <Route element={<DashboardLayout />}>
             <Route path="/" element={<Navigate to="/dashboard" />} />
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route path="/articles" element={<ArticlesPage />} />
             <Route path="/categories" element={<CategoriesPage />} />
             <Route path="/sub-categories" element={<SubCategoriesPage />} />
