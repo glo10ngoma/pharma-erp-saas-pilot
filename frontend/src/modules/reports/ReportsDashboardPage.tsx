@@ -44,7 +44,7 @@ export function ReportsDashboardPage() {
       <input className="input" placeholder="siteId optionnel" value={filters.siteId ?? ''} onChange={(e)=>setFilters({ ...filters, siteId: e.target.value || undefined })} />
     </div>
     <div className="grid two">
-      {dashboard.isLoading ? <div className="card">Chargement...</div> : cards.map(([label, value]) => <div className="card" key={label}><h3>{label}</h3><p className="metric">{format(value)}</p></div>)}
+      {dashboard.isLoading ? <div className="card"><p className="loading-state">Chargement des KPIs...</p></div> : cards.map(([label, value]) => <div className="card kpi-card" key={label}><span className="kpi-label">{label}</span><p className="metric">{format(value)}</p></div>)}
     </div>
     <ReportTable title="Rapport ventes" rows={sales.data ?? []} />
     <ReportTable title="Rapport stock" rows={(stock.data ?? []).slice(0, 20)} />
@@ -58,7 +58,7 @@ export function ReportsDashboardPage() {
 
 function ReportTable({ title, rows }: { title: string; rows: Array<Record<string, unknown>> }) {
   const columns = Object.keys(rows[0] ?? {});
-  return <div className="card"><h2>{title}</h2>{rows.length === 0 ? <p>Aucune donnee.</p> : <table className="data-table"><thead><tr>{columns.map((column)=><th key={column}>{label(column)}</th>)}</tr></thead><tbody>{rows.map((row, index)=><tr key={index}>{columns.map((column)=><td key={column}>{formatCell(column, row[column])}</td>)}</tr>)}</tbody></table>}</div>;
+  return <div className="card"><h2>{title}</h2>{rows.length === 0 ? <p className="empty-state">Aucune donnee pour la periode.</p> : <div className="table-wrap"><table className="data-table"><thead><tr>{columns.map((column)=><th key={column}>{label(column)}</th>)}</tr></thead><tbody>{rows.map((row, index)=><tr key={index}>{columns.map((column)=><td key={column}>{formatCell(column, row[column])}</td>)}</tr>)}</tbody></table></div>}</div>;
 }
 
 function label(value: string) {

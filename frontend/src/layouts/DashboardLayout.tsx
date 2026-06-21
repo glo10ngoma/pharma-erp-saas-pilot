@@ -3,6 +3,64 @@ import { Link, Navigate, Outlet, useNavigate } from 'react-router-dom';
 export function DashboardLayout() {
   const navigate = useNavigate();
   const token = localStorage.getItem('accessToken');
+  const groups = [
+    {
+      title: 'Pilotage',
+      links: [
+        ['/dashboard', 'Dashboard'],
+        ['/reports', 'Reporting BI'],
+        ['/profile', 'Mon profil'],
+      ],
+    },
+    {
+      title: 'Pharmacie',
+      links: [
+        ['/articles', 'Articles'],
+        ['/categories', 'Categories'],
+        ['/sub-categories', 'Sous-categories'],
+        ['/galenic-forms', 'Formes galeniques'],
+        ['/administration-routes', 'Voies administration'],
+        ['/product-types', 'Types produits'],
+        ['/suppliers', 'Fournisseurs'],
+        ['/customers', 'Clients'],
+      ],
+    },
+    {
+      title: 'Operations',
+      links: [
+        ['/purchases', 'Achats'],
+        ['/lots', 'Lots'],
+        ['/stocks', 'Stocks'],
+        ['/sales', 'Ventes'],
+        ['/pos', 'POS'],
+        ['/cash', 'Caisse'],
+        ['/inventories', 'Inventaires'],
+      ],
+    },
+    {
+      title: 'Tiers',
+      links: [
+        ['/organizations', 'Organisations'],
+        ['/insurance-plans', 'Plans assurance'],
+        ['/memberships', 'Affiliations'],
+        ['/receivables', 'Creances'],
+      ],
+    },
+    {
+      title: 'Finance & admin',
+      links: [
+        ['/accounting/accounts', 'Plan comptable'],
+        ['/accounting/journals', 'Journaux'],
+        ['/accounting/entries', 'Ecritures'],
+        ['/accounting/general-ledger', 'Grand livre'],
+        ['/accounting/trial-balance', 'Balance'],
+        ['/users', 'Users'],
+        ['/roles', 'Roles'],
+        ['/permissions', 'Permissions'],
+        ['/sites', 'Sites'],
+      ],
+    },
+  ];
 
   if (!token) return <Navigate to="/login" replace />;
 
@@ -15,39 +73,21 @@ export function DashboardLayout() {
   return (
     <div className="layout">
       <aside className="sidebar">
-        <h2>PharmaERP</h2>
-        <nav style={{ display: 'grid', gap: 12 }}>
-          <Link to="/dashboard">Dashboard</Link>
-          <Link to="/profile">Mon profil</Link>
-          <Link to="/articles">Articles</Link>
-          <Link to="/categories">Categories</Link>
-          <Link to="/sub-categories">SubCategories</Link>
-          <Link to="/galenic-forms">Formes</Link>
-          <Link to="/administration-routes">Voies</Link>
-          <Link to="/product-types">Types produits</Link>
-          <Link to="/suppliers">Fournisseurs</Link>
-          <Link to="/customers">Clients</Link>
-          <Link to="/purchases">Achats</Link>
-          <Link to="/lots">Lots</Link>
-          <Link to="/stocks">Stocks</Link>
-          <Link to="/inventories">Inventaires</Link>
-          <Link to="/accounting/accounts">Plan comptable</Link>
-          <Link to="/accounting/journals">Journaux</Link>
-          <Link to="/accounting/entries">Ecritures</Link>
-          <Link to="/accounting/general-ledger">Grand livre</Link>
-          <Link to="/accounting/trial-balance">Balance</Link>
-          <Link to="/reports">Reporting BI</Link>
-          <Link to="/sales">Ventes</Link>
-          <Link to="/pos">POS</Link>
-          <Link to="/cash">Caisse</Link>
-          <Link to="/organizations">Organizations</Link>
-          <Link to="/insurance-plans">Plans assurance</Link>
-          <Link to="/memberships">Memberships</Link>
-          <Link to="/receivables">Creances</Link>
-          <Link to="/users">Users</Link>
-          <Link to="/roles">Roles</Link>
-          <Link to="/permissions">Permissions</Link>
-          <Link to="/sites">Sites</Link>
+        <div className="brand">
+          <h2>PharmaERP</h2>
+          <span>SaaS pharmacie V1</span>
+        </div>
+        <nav>
+          {groups.map((group) => (
+            <div className="nav-group" key={group.title}>
+              <div className="nav-group-title">{group.title}</div>
+              {group.links.map(([to, label]) => (
+                <Link className="nav-link" key={to} to={to}>
+                  {label}
+                </Link>
+              ))}
+            </div>
+          ))}
         </nav>
         <button className="ghost-button" onClick={logout}>
           Deconnexion

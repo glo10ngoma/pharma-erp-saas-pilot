@@ -356,4 +356,152 @@ SET commercial_name = EXCLUDED.commercial_name,
     default_stock_max = EXCLUDED.default_stock_max,
     is_active = EXCLUDED.is_active;
 
+WITH target_tenant AS (
+  SELECT tenant_id FROM tenants WHERE tenant_code = 'STAGING'
+),
+product_type_data(type_code, type_name) AS (
+  VALUES
+    ('STG-CAT-MED', 'Medicament'),
+    ('STG-CAT-SUPP', 'Supplement'),
+    ('STG-CAT-PARA', 'Parapharmacie'),
+    ('STG-CAT-DM', 'Dispositif medical')
+)
+INSERT INTO product_types (tenant_id, type_code, type_name)
+SELECT t.tenant_id, d.type_code, d.type_name
+FROM target_tenant t
+CROSS JOIN product_type_data d
+ON CONFLICT (type_name) DO UPDATE
+SET tenant_id = EXCLUDED.tenant_id,
+    type_code = EXCLUDED.type_code;
+
+WITH target_tenant AS (
+  SELECT tenant_id FROM tenants WHERE tenant_code = 'STAGING'
+),
+category_data(category_code, category_name) AS (
+  VALUES
+    ('STG-CAT-ANTALG', 'Antalgiques et antipyretiques'),
+    ('STG-CAT-ATB', 'Antibiotiques'),
+    ('STG-CAT-PALU', 'Antipaludiques'),
+    ('STG-CAT-GASTRO', 'Gastro-enterologie'),
+    ('STG-CAT-DIAB', 'Diabete'),
+    ('STG-CAT-CARDIO', 'Cardiologie'),
+    ('STG-CAT-ANTISEP', 'Antiseptiques'),
+    ('STG-CAT-DM-CAT', 'Dispositifs medicaux')
+)
+INSERT INTO categories (tenant_id, category_code, category_name, is_active)
+SELECT t.tenant_id, d.category_code, d.category_name, TRUE
+FROM target_tenant t
+CROSS JOIN category_data d
+ON CONFLICT (category_name) DO UPDATE
+SET tenant_id = EXCLUDED.tenant_id,
+    category_code = EXCLUDED.category_code,
+    is_active = EXCLUDED.is_active;
+
+WITH target_tenant AS (
+  SELECT tenant_id FROM tenants WHERE tenant_code = 'STAGING'
+),
+sub_category_data(category_code, sub_category_code, sub_category_name) AS (
+  VALUES
+    ('STG-CAT-ANTALG', 'STG-CAT-ANTALG-SIMPLE', 'Antalgiques simples'),
+    ('STG-CAT-ATB', 'STG-CAT-ATB-PEN', 'Penicillines'),
+    ('STG-CAT-ATB', 'STG-CAT-ATB-MAC', 'Macrolides'),
+    ('STG-CAT-PALU', 'STG-CAT-PALU-ACT', 'ACT'),
+    ('STG-CAT-GASTRO', 'STG-CAT-GASTRO-ORS', 'Rehydratation orale'),
+    ('STG-CAT-GASTRO', 'STG-CAT-GASTRO-IPP', 'IPP'),
+    ('STG-CAT-DIAB', 'STG-CAT-DIAB-BIG', 'Antidiabetiques oraux'),
+    ('STG-CAT-CARDIO', 'STG-CAT-CARDIO-HTA', 'Antihypertenseurs'),
+    ('STG-CAT-ANTISEP', 'STG-CAT-ANTISEP-DESINF', 'Desinfection'),
+    ('STG-CAT-DM-CAT', 'STG-CAT-DM-PROT', 'Protection')
+)
+INSERT INTO sub_categories (tenant_id, category_id, sub_category_code, sub_category_name, is_active)
+SELECT t.tenant_id, c.category_id, d.sub_category_code, d.sub_category_name, TRUE
+FROM target_tenant t
+JOIN sub_category_data d ON TRUE
+JOIN categories c ON c.tenant_id = t.tenant_id AND c.category_code = d.category_code
+ON CONFLICT (category_id, sub_category_code) DO UPDATE
+SET tenant_id = EXCLUDED.tenant_id,
+    sub_category_name = EXCLUDED.sub_category_name,
+    is_active = EXCLUDED.is_active;
+
+WITH target_tenant AS (
+  SELECT tenant_id FROM tenants WHERE tenant_code = 'STAGING'
+),
+form_data(form_code, form_name) AS (
+  VALUES
+    ('STG-CAT-COMP', 'Comprime'),
+    ('STG-CAT-GEL', 'Gelule'),
+    ('STG-CAT-SACHET', 'Sachet'),
+    ('STG-CAT-SOL', 'Solution'),
+    ('STG-CAT-GANTS', 'Gants')
+)
+INSERT INTO galenic_forms (tenant_id, form_code, form_name)
+SELECT t.tenant_id, d.form_code, d.form_name
+FROM target_tenant t
+CROSS JOIN form_data d
+ON CONFLICT (form_name) DO UPDATE
+SET tenant_id = EXCLUDED.tenant_id,
+    form_code = EXCLUDED.form_code;
+
+WITH target_tenant AS (
+  SELECT tenant_id FROM tenants WHERE tenant_code = 'STAGING'
+),
+route_data(route_code, route_name) AS (
+  VALUES
+    ('STG-CAT-ORAL', 'Orale'),
+    ('STG-CAT-CUT', 'Cutanee')
+)
+INSERT INTO administration_routes (tenant_id, route_code, route_name)
+SELECT t.tenant_id, d.route_code, d.route_name
+FROM target_tenant t
+CROSS JOIN route_data d
+ON CONFLICT (route_name) DO UPDATE
+SET tenant_id = EXCLUDED.tenant_id,
+    route_code = EXCLUDED.route_code;
+
+WITH target_tenant AS (
+  SELECT tenant_id FROM tenants WHERE tenant_code = 'STAGING'
+),
+article_data(article_code, commercial_name, dci, dosage, category_code, sub_category_code, form_code, route_code, type_code, atc_code, prescription_required, stock_min) AS (
+  VALUES
+    ('STG-CAT-PARA-500', 'Paracetamol 500 mg comprime', 'Paracetamol', '500 mg', 'STG-CAT-ANTALG', 'STG-CAT-ANTALG-SIMPLE', 'STG-CAT-COMP', 'STG-CAT-ORAL', 'STG-CAT-MED', 'N02BE01', FALSE, 20),
+    ('STG-CAT-AMOX-500', 'Amoxicilline 500 mg gelule', 'Amoxicilline', '500 mg', 'STG-CAT-ATB', 'STG-CAT-ATB-PEN', 'STG-CAT-GEL', 'STG-CAT-ORAL', 'STG-CAT-MED', 'J01CA04', TRUE, 10),
+    ('STG-CAT-AZI-500', 'Azithromycine 500 mg comprime', 'Azithromycine', '500 mg', 'STG-CAT-ATB', 'STG-CAT-ATB-MAC', 'STG-CAT-COMP', 'STG-CAT-ORAL', 'STG-CAT-MED', 'J01FA10', TRUE, 8),
+    ('STG-CAT-ART-LUM', 'Artemether Lumefantrine 20/120 mg', 'Artemether + Lumefantrine', '20 mg + 120 mg', 'STG-CAT-PALU', 'STG-CAT-PALU-ACT', 'STG-CAT-COMP', 'STG-CAT-ORAL', 'STG-CAT-MED', 'P01BF01', TRUE, 20),
+    ('STG-CAT-ORS-SACHET', 'SRO sachet', 'Sels de rehydratation orale', 'Sachet', 'STG-CAT-GASTRO', 'STG-CAT-GASTRO-ORS', 'STG-CAT-SACHET', 'STG-CAT-ORAL', 'STG-CAT-MED', 'A07CA', FALSE, 30),
+    ('STG-CAT-OMEP-20', 'Omeprazole 20 mg gelule', 'Omeprazole', '20 mg', 'STG-CAT-GASTRO', 'STG-CAT-GASTRO-IPP', 'STG-CAT-GEL', 'STG-CAT-ORAL', 'STG-CAT-MED', 'A02BC01', FALSE, 15),
+    ('STG-CAT-METF-500', 'Metformine 500 mg comprime', 'Metformine', '500 mg', 'STG-CAT-DIAB', 'STG-CAT-DIAB-BIG', 'STG-CAT-COMP', 'STG-CAT-ORAL', 'STG-CAT-MED', 'A10BA02', TRUE, 10),
+    ('STG-CAT-AMLO-5', 'Amlodipine 5 mg comprime', 'Amlodipine', '5 mg', 'STG-CAT-CARDIO', 'STG-CAT-CARDIO-HTA', 'STG-CAT-COMP', 'STG-CAT-ORAL', 'STG-CAT-MED', 'C08CA01', TRUE, 10),
+    ('STG-CAT-ALCOOL-70', 'Alcool 70 pour cent', 'Ethanol', '70%', 'STG-CAT-ANTISEP', 'STG-CAT-ANTISEP-DESINF', 'STG-CAT-SOL', 'STG-CAT-CUT', 'STG-CAT-PARA', 'D08AX08', FALSE, 10),
+    ('STG-CAT-GANTS-MED', 'Gants medicaux non steriles', NULL, 'Taille M', 'STG-CAT-DM-CAT', 'STG-CAT-DM-PROT', 'STG-CAT-GANTS', 'STG-CAT-CUT', 'STG-CAT-DM', NULL, FALSE, 50)
+)
+INSERT INTO articles (
+  tenant_id, article_code, commercial_name, dci, dosage, category_id, sub_category_id,
+  form_id, route_id, product_type_id, atc_code, prescription_required, default_stock_min, is_active
+)
+SELECT
+  t.tenant_id, d.article_code, d.commercial_name, d.dci, d.dosage, c.category_id, sc.sub_category_id,
+  gf.form_id, ar.route_id, pt.product_type_id, d.atc_code, d.prescription_required, d.stock_min, TRUE
+FROM target_tenant t
+JOIN article_data d ON TRUE
+JOIN categories c ON c.tenant_id = t.tenant_id AND c.category_code = d.category_code
+JOIN sub_categories sc ON sc.tenant_id = t.tenant_id AND sc.sub_category_code = d.sub_category_code
+JOIN galenic_forms gf ON gf.tenant_id = t.tenant_id AND gf.form_code = d.form_code
+JOIN administration_routes ar ON ar.tenant_id = t.tenant_id AND ar.route_code = d.route_code
+JOIN product_types pt ON pt.tenant_id = t.tenant_id AND pt.type_code = d.type_code
+ON CONFLICT (article_code) DO UPDATE
+SET tenant_id = EXCLUDED.tenant_id,
+    commercial_name = EXCLUDED.commercial_name,
+    dci = EXCLUDED.dci,
+    dosage = EXCLUDED.dosage,
+    category_id = EXCLUDED.category_id,
+    sub_category_id = EXCLUDED.sub_category_id,
+    form_id = EXCLUDED.form_id,
+    route_id = EXCLUDED.route_id,
+    product_type_id = EXCLUDED.product_type_id,
+    atc_code = EXCLUDED.atc_code,
+    prescription_required = EXCLUDED.prescription_required,
+    default_stock_min = EXCLUDED.default_stock_min,
+    is_active = TRUE,
+    updated_at = CURRENT_TIMESTAMP;
+
 COMMIT;

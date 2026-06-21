@@ -14,21 +14,21 @@ export function DashboardPage() {
         </div>
       </div>
       <div className="stats-grid">
-        <div className="card">
-          <strong>Version</strong>
-          <h2>V1</h2>
+        <div className="card kpi-card">
+          <span className="kpi-label">Version</span>
+          <p className="metric">V1</p>
         </div>
-        <div className="card">
-          <strong>Tenant</strong>
-          <h2>Filtre ON</h2>
+        <div className="card kpi-card">
+          <span className="kpi-label">Tenant</span>
+          <p className="metric">Filtre ON</p>
         </div>
-        <div className="card">
-          <strong>Site</strong>
-          <h2>{user?.siteId ? 'Controle' : 'Global'}</h2>
+        <div className="card kpi-card">
+          <span className="kpi-label">Site</span>
+          <p className="metric">{user?.siteId ? 'Controle' : 'Global'}</p>
         </div>
-        <div className="card">
-          <strong>Permissions</strong>
-          <h2>{user?.permissions?.length || 0}</h2>
+        <div className="card kpi-card">
+          <span className="kpi-label">Permissions</span>
+          <p className="metric">{user?.permissions?.length || 0}</p>
         </div>
       </div>
       <div className="card">

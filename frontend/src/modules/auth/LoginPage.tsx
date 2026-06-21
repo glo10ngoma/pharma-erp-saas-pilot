@@ -30,7 +30,7 @@ export function LoginPage() {
     <div className="login-shell">
       <form className="login-panel" onSubmit={handleSubmit}>
         <h1>PharmaERP SaaS</h1>
-        <p>Connexion utilisateur</p>
+        <p className="muted">Connexion securisee a votre espace pharmacie</p>
         <label>
           Email
           <input

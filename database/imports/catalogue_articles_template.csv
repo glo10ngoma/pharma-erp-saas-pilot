@@ -1,0 +1,21 @@
+article_code,commercial_name,dci,dosage,category,sub_category,galenic_form,administration_route,product_type,atc_code,prescription_required,stock_min
+CAT-PARA-500,Paracetamol 500 mg comprime,Paracetamol,500 mg,Antalgiques et antipyretiques,Antalgiques simples,Comprime,Orale,Medicament,N02BE01,false,20
+CAT-IBU-400,Ibuprofene 400 mg comprime,Ibuprofene,400 mg,Anti-inflammatoires,AINS,Comprime,Orale,Medicament,M01AE01,false,15
+CAT-AMOX-500,Amoxicilline 500 mg gelule,Amoxicilline,500 mg,Antibiotiques,Penicillines,Gelule,Orale,Medicament,J01CA04,true,10
+CAT-AMOX-CLAV-625,Amoxicilline acide clavulanique 625 mg,Amoxicilline + acide clavulanique,500 mg + 125 mg,Antibiotiques,Penicillines associees,Comprime,Orale,Medicament,J01CR02,true,8
+CAT-AZI-500,Azithromycine 500 mg comprime,Azithromycine,500 mg,Antibiotiques,Macrolides,Comprime,Orale,Medicament,J01FA10,true,8
+CAT-METRO-500,Metronidazole 500 mg comprime,Metronidazole,500 mg,Anti-infectieux,Nitro-imidazoles,Comprime,Orale,Medicament,J01XD01,true,10
+CAT-ART-LUM,Artemether Lumefantrine 20/120 mg,Artemether + Lumefantrine,20 mg + 120 mg,Antipaludiques,ACT,Comprime,Orale,Medicament,P01BF01,true,20
+CAT-QUIN-INJ,Quinine injectable 300 mg/ml,Quinine,300 mg/ml,Antipaludiques,Quinine injectable,Injectable,Intraveineuse,Medicament,P01BC01,true,5
+CAT-ORS-SACHET,SRO sachet,Sels de rehydratation orale,Sachet,Gastro-enterologie,Rehydratation orale,Sachet,Orale,Medicament,A07CA,false,30
+CAT-OMEP-20,Omeprazole 20 mg gelule,Omeprazole,20 mg,Gastro-enterologie,IPP,Gelule,Orale,Medicament,A02BC01,false,15
+CAT-METF-500,Metformine 500 mg comprime,Metformine,500 mg,Diabete,Antidiabetiques oraux,Comprime,Orale,Medicament,A10BA02,true,10
+CAT-GLIB-5,Glibenclamide 5 mg comprime,Glibenclamide,5 mg,Diabete,Sulfamides hypoglycemiants,Comprime,Orale,Medicament,A10BB01,true,10
+CAT-AMLO-5,Amlodipine 5 mg comprime,Amlodipine,5 mg,Cardiologie,Antihypertenseurs,Comprime,Orale,Medicament,C08CA01,true,10
+CAT-LOS-50,Losartan 50 mg comprime,Losartan,50 mg,Cardiologie,ARA II,Comprime,Orale,Medicament,C09CA01,true,10
+CAT-SALB-INH,Salbutamol inhalateur 100 mcg,Salbutamol,100 mcg/dose,Pneumologie,Bronchodilatateurs,Aerosol,Inhalation,Medicament,R03AC02,true,5
+CAT-CET-10,Cetirizine 10 mg comprime,Cetirizine,10 mg,Allergologie,Antihistaminiques,Comprime,Orale,Medicament,R06AE07,false,10
+CAT-VITC-500,Vitamine C 500 mg comprime,Acide ascorbique,500 mg,Vitamines et supplements,Vitamines,Comprime,Orale,Supplement,A11GA01,false,20
+CAT-ALCOOL-70,Alcool 70 pour cent,Ethanol,70%,Antiseptiques,Desinfection,Solution,Cutanee,Parapharmacie,D08AX08,false,10
+CAT-BETADINE-10,Povidone iodee 10 pour cent,Povidone iodee,10%,Antiseptiques,Desinfection,Solution,Cutanee,Medicament,D08AG02,false,8
+CAT-GANTS-MED,Gants medicaux non steriles,,Taille M,Dispositifs medicaux,Protection,Gants,Cutanee,Dispositif medical,,false,50

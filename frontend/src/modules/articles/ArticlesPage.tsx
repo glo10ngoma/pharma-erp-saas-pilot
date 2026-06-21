@@ -65,19 +65,21 @@ export function ArticlesPage() {
         <input className="input" placeholder="Code-barres" value={barcode} onChange={(e)=>setBarcode(e.target.value)} />
         <input className="input" placeholder="Stock min" type="number" value={defaultStockMin} onChange={(e)=>setDefaultStockMin(e.target.value)} />
         <input className="input" placeholder="Stock max" type="number" value={defaultStockMax} onChange={(e)=>setDefaultStockMax(e.target.value)} />
-        <button className="button" disabled={create.isPending}>Creer</button>
+        <button className="button" disabled={create.isPending}>{create.isPending ? 'Creation...' : 'Creer article'}</button>
       </form>
       <div className="card">
         <input className="input" placeholder="Recherche article, DCI ou code-barres" value={search} onChange={(e)=>setSearch(e.target.value)} />
       </div>
       <div className="card">
-        {articles.isLoading ? 'Chargement...' : (
+        {articles.isLoading ? <p className="loading-state">Chargement des articles...</p> : (articles.data?.items ?? []).length === 0 ? <p className="empty-state">Aucun article trouve. Creez un article ou importez le catalogue.</p> : (
+          <div className="table-wrap">
           <table className="data-table">
             <thead><tr><th>Code</th><th>Nom commercial</th><th>DCI</th><th>Dosage</th><th>Stock min</th><th>Actif</th></tr></thead>
             <tbody>{(articles.data?.items ?? []).map((article) => (
-              <tr key={article.articleId}><td>{article.articleCode}</td><td>{article.commercialName}</td><td>{article.dci || '-'}</td><td>{article.dosage || '-'}</td><td>{article.defaultStockMin}</td><td>{article.isActive ? 'Oui' : 'Non'}</td></tr>
+              <tr key={article.articleId}><td>{article.articleCode}</td><td>{article.commercialName}</td><td>{article.dci || '-'}</td><td>{article.dosage || '-'}</td><td>{article.defaultStockMin}</td><td><span className={`badge ${article.isActive ? 'badge-success' : 'badge-muted'}`}>{article.isActive ? 'Actif' : 'Inactif'}</span></td></tr>
             ))}</tbody>
           </table>
+          </div>
         )}
       </div>
     </>
