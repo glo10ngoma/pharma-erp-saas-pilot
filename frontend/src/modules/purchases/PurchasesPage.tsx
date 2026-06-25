@@ -1,5 +1,6 @@
 import { Fragment, FormEvent, KeyboardEvent, ReactNode, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { Article, articlesService } from '../../services/articles.service';
 import { apiErrorMessage } from '../../services/apiError';
 import { codeGeneratorService } from '../../services/codeGenerator.service';
@@ -408,7 +409,7 @@ export function PurchasesPage() {
           <h1>Achats</h1>
           <p className="muted">Suivi des achats, lignes fournisseur et validation vers lots et stock.</p>
         </div>
-        <button className="button" type="button" onClick={() => setCreateOpen(true)}>+ Nouvel Achat</button>
+        <Link className="button" to="/purchases/new">+ Nouvel Achat</Link>
       </div>
 
       <div className="card purchase-filters">

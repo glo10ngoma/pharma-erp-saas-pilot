@@ -20,6 +20,8 @@ Ce document formalise progressivement l'identite visuelle de l'ERP Pharmaceutiqu
 - Pages structurees en cartes simples.
 - Modals larges pour les ecrans metier riches, notamment achats, ventes et inventaires.
 - Les flux complexes peuvent rester en pages dediees quand l'espace de travail le justifie.
+- La page `/purchases/new` est la reference UX pour les flux complexes : breadcrumb, informations generales compactes, grille metier centrale, resume temps reel et actions en bas de page.
+- Les futurs modules Ventes, Inventaires, Transferts et Retours doivent reprendre ce modele quand ils manipulent plusieurs lignes.
 
 ## Tableaux
 
@@ -41,6 +43,7 @@ Ce document formalise progressivement l'identite visuelle de l'ERP Pharmaceutiqu
 - Validation visuelle proche du champ ou de la ligne concernee.
 - Modals pour les creations simples.
 - Pages dediees pour les flux complexes ou longs.
+- Les pages dediees doivent reduire les hauteurs inutiles : labels courts, inputs compacts, boutons compacts et espacement vertical minimal.
 
 ## Raccourcis clavier
 
