@@ -986,12 +986,16 @@ details.nav-group .nav-link {
   box-shadow: var(--shadow);
   display: grid;
   gap: 8px;
-  left: 8px;
-  min-width: min(760px, calc(100vw - 48px));
+  max-height: 320px;
+  min-width: 650px;
   padding: 8px;
-  position: absolute;
-  top: 34px;
-  z-index: 1000;
+  position: fixed;
+  z-index: 5000;
+}
+
+[data-theme='dark'] .article-popover {
+  background: #111827;
+  border-color: #334155;
 }
 
 .article-popover-search {
@@ -1000,7 +1004,7 @@ details.nav-group .nav-link {
 
 .article-popover-list {
   display: grid;
-  max-height: 280px;
+  max-height: 226px;
   overflow: auto;
 }
 
@@ -1031,13 +1035,28 @@ details.nav-group .nav-link {
 }
 
 .article-popover-option:hover,
-.article-popover-option:focus {
+.article-popover-option:focus,
+.article-popover-option.selected {
   background: var(--surface-soft);
+}
+
+.article-popover-option.selected {
+  box-shadow: inset 3px 0 0 var(--primary);
 }
 
 .article-popover-empty {
   color: var(--muted);
   padding: 12px 8px;
+}
+
+.article-popover-footer {
+  align-items: center;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  display: flex;
+  font-size: .78rem;
+  justify-content: space-between;
+  padding: 6px 2px 0;
 }
 
 .form-summary {

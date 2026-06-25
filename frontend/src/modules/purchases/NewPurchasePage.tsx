@@ -1,4 +1,5 @@
-import { Fragment, FormEvent, KeyboardEvent, ReactNode, useEffect, useMemo, useState } from 'react';
+import { Fragment, FormEvent, KeyboardEvent, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { Article, articlesService } from '../../services/articles.service';
@@ -171,8 +172,8 @@ export function NewPurchasePage() {
   function articleSuggestions(line: PurchaseDraftLine) {
     const query = line.articleQuery.trim().toLowerCase();
     const source = articleOptions;
-    if (!query) return source.slice(0, 8);
-    return source.filter((article) => [article.articleCode, article.commercialName, article.dci, article.dosage].some((value) => String(value ?? '').toLowerCase().includes(query))).slice(0, 8);
+    if (!query) return source;
+    return source.filter((article) => [article.articleCode, article.commercialName, article.dci, article.dosage].some((value) => String(value ?? '').toLowerCase().includes(query)));
   }
   function validateDraftLines() {
     if (draftLines.length === 0) return 'Ajoutez au moins une ligne achat.';
@@ -286,61 +287,119 @@ function PurchaseGridRow(props: { action?: ReactNode; activeAutocomplete: string
 
 function ArticleCell({ activeAutocomplete, currencyCode, formById, handleGridKey, line, rowIndex, selectArticle, setActiveAutocomplete, setSelectedLineId, stockByArticle, suggestions, updateLine }: { activeAutocomplete: string; article?: Article; currencyCode: string; formById: Map<string, string>; handleGridKey: (event: KeyboardEvent<HTMLElement>, row: number, col: number, lineId: string) => void; line: PurchaseDraftLine; rowIndex: number; selectArticle: (lineId: string, article: Article) => void; setActiveAutocomplete: (id: string) => void; setSelectedLineId: (id: string) => void; stockByArticle: Map<string, number>; suggestions: Article[]; updateLine: (patch: Partial<PurchaseDraftLine>) => void }) {
   const isOpen = activeAutocomplete === line.id;
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [position, setPosition] = useState({ left: 0, top: 0, width: 700 });
+  const visibleSuggestions = suggestions.slice(0, 20);
   const updateArticleQuery = (value: string) => {
     setActiveAutocomplete(line.id);
     updateLine({ articleQuery: value, articleId: '' });
   };
+  const closePopover = () => setActiveAutocomplete('');
+  const chooseArticle = (article: Article) => {
+    selectArticle(line.id, article);
+    setTimeout(() => document.querySelector<HTMLElement>(`[data-grid-cell="${rowIndex}-1"]`)?.focus(), 0);
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setHighlightedIndex(0);
+  }, [isOpen, line.articleQuery]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const updatePosition = () => {
+      const rect = inputRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const width = Math.min(720, Math.max(650, window.innerWidth - 32));
+      const left = Math.min(Math.max(16, rect.left), Math.max(16, window.innerWidth - width - 16));
+      setPosition({ left, top: rect.bottom + 6, width });
+    };
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onPointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (inputRef.current?.contains(target) || popoverRef.current?.contains(target)) return;
+      closePopover();
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    return () => document.removeEventListener('mousedown', onPointerDown);
+  }, [isOpen]);
+
+  const handleArticleKeys = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key === 'Escape' && isOpen) {
+      event.preventDefault();
+      closePopover();
+      return;
+    }
+    if (event.key === 'ArrowDown' && isOpen) {
+      event.preventDefault();
+      setHighlightedIndex((index) => Math.min(index + 1, Math.max(visibleSuggestions.length - 1, 0)));
+      return;
+    }
+    if (event.key === 'ArrowUp' && isOpen) {
+      event.preventDefault();
+      setHighlightedIndex((index) => Math.max(index - 1, 0));
+      return;
+    }
+    if (event.key === 'Enter' && isOpen && visibleSuggestions[highlightedIndex]) {
+      event.preventDefault();
+      chooseArticle(visibleSuggestions[highlightedIndex]);
+      return;
+    }
+    handleGridKey(event, rowIndex, 0, line.id);
+  };
 
   return <td className="autocomplete-cell sticky-article-cell">
     <input
+      ref={inputRef}
       className="input compact-input"
       data-grid-cell={`${rowIndex}-0`}
       placeholder="Code, nom, DCI..."
       value={line.articleQuery}
-      onBlur={() => window.setTimeout(() => setActiveAutocomplete(''), 120)}
       onClick={() => { setSelectedLineId(line.id); setActiveAutocomplete(line.id); }}
       onFocus={() => { setSelectedLineId(line.id); setActiveAutocomplete(line.id); }}
       onMouseDown={() => { setSelectedLineId(line.id); setActiveAutocomplete(line.id); }}
-      onKeyDown={(event) => {
-        if (event.key === 'Escape' && isOpen) {
-          event.preventDefault();
-          setActiveAutocomplete('');
-          return;
-        }
-        if (event.key === 'Enter' && isOpen && suggestions[0]) {
-          event.preventDefault();
-          selectArticle(line.id, suggestions[0]);
-          return;
-        }
-        handleGridKey(event, rowIndex, 0, line.id);
-      }}
+      onKeyDown={handleArticleKeys}
       onChange={(event) => updateArticleQuery(event.target.value)}
       onInput={(event) => updateArticleQuery(event.currentTarget.value)}
     />
-    {isOpen && <div className="article-popover" onMouseDown={(event) => event.preventDefault()}>
-      <input
-        className="input compact-input article-popover-search"
-        placeholder="Rechercher code, nom, DCI, dosage"
-        value={line.articleQuery}
-        onChange={(event) => updateArticleQuery(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === 'Escape') { event.preventDefault(); setActiveAutocomplete(''); }
-          if (event.key === 'Enter' && suggestions[0]) { event.preventDefault(); selectArticle(line.id, suggestions[0]); }
-        }}
-      />
-      <div className="article-popover-list">
-        <div className="article-popover-head"><span>Code</span><span>Nom</span><span>DCI</span><span>Dosage</span><span>Stock</span><span>PV</span></div>
-        {suggestions.length === 0 && <div className="article-popover-empty">Aucun article trouve</div>}
-        {suggestions.map((suggestion) => <button className="article-popover-option" type="button" key={suggestion.articleId} onMouseDown={(event) => { event.preventDefault(); selectArticle(line.id, suggestion); }}>
-          <span>{suggestion.articleCode}</span>
-          <strong>{suggestion.commercialName}</strong>
-          <span>{suggestion.dci ?? '-'}</span>
-          <span>{suggestion.dosage ?? '-'}</span>
-          <span>{stockByArticle.get(suggestion.articleId) ?? suggestion.stockAvailable ?? 0}</span>
-          <span>{formatMoney(suggestion.sellingPrice ?? 0, currencyCode)}</span>
-        </button>)}
-      </div>
-    </div>}
+    {isOpen && createPortal(
+      <div ref={popoverRef} className="article-popover floating-article-popover" style={{ left: position.left, top: position.top, width: position.width }}>
+        <input
+          className="input compact-input article-popover-search"
+          placeholder="Rechercher (code, nom, DCI, dosage...)"
+          value={line.articleQuery}
+          autoFocus
+          onChange={(event) => updateArticleQuery(event.target.value)}
+          onKeyDown={handleArticleKeys}
+        />
+        <div className="article-popover-list">
+          <div className="article-popover-head"><span>Code</span><span>Nom</span><span>DCI</span><span>Dosage</span><span>Stock</span><span>Prix vente</span></div>
+          {visibleSuggestions.length === 0 && <div className="article-popover-empty">Aucun article trouve</div>}
+          {visibleSuggestions.map((suggestion, index) => <button className={`article-popover-option ${index === highlightedIndex ? 'selected' : ''}`} type="button" key={suggestion.articleId} onMouseEnter={() => setHighlightedIndex(index)} onClick={() => chooseArticle(suggestion)}>
+            <span>{suggestion.articleCode}</span>
+            <strong>{suggestion.commercialName}</strong>
+            <span>{suggestion.dci ?? '-'}</span>
+            <span>{suggestion.dosage ?? '-'}</span>
+            <span>{stockByArticle.get(suggestion.articleId) ?? suggestion.stockAvailable ?? 0}</span>
+            <span>{formatMoney(suggestion.sellingPrice ?? 0, currencyCode)}</span>
+          </button>)}
+        </div>
+        <div className="article-popover-footer"><span>↑ ↓ pour naviguer • Entrée pour sélectionner • Échap pour fermer</span><strong>{visibleSuggestions.length ? `1 - ${visibleSuggestions.length} sur ${suggestions.length}` : `0 sur ${suggestions.length}`}</strong></div>
+      </div>,
+      document.body,
+    )}
   </td>;
 }
 
