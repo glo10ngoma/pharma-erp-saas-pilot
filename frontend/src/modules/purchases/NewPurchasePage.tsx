@@ -54,21 +54,37 @@ export function NewPurchasePage() {
   const [form, setForm] = useState<PurchaseForm>(initialForm);
   const [draftLines, setDraftLines] = useState<PurchaseDraftLine[]>([]);
   const [quickLine, setQuickLine] = useState<PurchaseDraftLine>(newLine());
+  const [articleOptions, setArticleOptions] = useState<Article[]>([]);
+  const [articlesLoading, setArticlesLoading] = useState(true);
   const [selectedLineId, setSelectedLineId] = useState('');
   const [activeAutocomplete, setActiveAutocomplete] = useState('');
   const [clientError, setClientError] = useState('');
 
   const suppliers = useQuery({ queryKey: ['suppliers'], queryFn: async () => (await referenceService.suppliers.getAll()).data });
   const sites = useQuery({ queryKey: ['sites'], queryFn: async () => (await sitesService.getAll()).data });
-  const articles = useQuery({ queryKey: ['articles'], queryFn: async () => (await articlesService.getAll({ limit: 500 })).data.items });
   const categories = useQuery({ queryKey: ['categories'], queryFn: async () => (await referenceService.categories.getAll()).data });
   const forms = useQuery({ queryKey: ['galenic-forms'], queryFn: async () => (await referenceService.galenicForms.getAll()).data });
   const stocks = useQuery({ queryKey: ['stocks'], queryFn: async () => (await stocksService.getAll()).data });
   const nextCode = useQuery({ queryKey: ['next-code', 'purchases', 'page'], queryFn: async () => (await codeGeneratorService.next('purchases')).data.code });
 
+  useEffect(() => {
+    let mounted = true;
+    setArticlesLoading(true);
+    articlesService.getAll({ limit: 100 })
+      .then((response) => {
+        const payload = response.data as unknown as { items?: Article[]; data?: { items?: Article[] } } | Article[];
+        const items = Array.isArray(payload) ? payload : payload.items ?? payload.data?.items ?? [];
+        if (mounted) setArticleOptions(items);
+      })
+      .finally(() => {
+        if (mounted) setArticlesLoading(false);
+      });
+    return () => { mounted = false; };
+  }, []);
+
   useEffect(() => { if (!form.purchaseNumber && nextCode.data) setForm((current) => ({ ...current, purchaseNumber: nextCode.data ?? '' })); }, [form.purchaseNumber, nextCode.data]);
 
-  const articleById = useMemo(() => new Map((articles.data ?? []).map((article) => [article.articleId, article])), [articles.data]);
+  const articleById = useMemo(() => new Map(articleOptions.map((article) => [article.articleId, article])), [articleOptions]);
   const categoryById = useMemo(() => new Map((categories.data ?? []).map((category) => [category.categoryId, category.categoryName])), [categories.data]);
   const formById = useMemo(() => new Map((forms.data ?? []).map((item) => [item.formId, item.formName])), [forms.data]);
   const stockByArticle = useMemo(() => {
@@ -148,7 +164,7 @@ export function NewPurchasePage() {
   }
   function articleSuggestions(line: PurchaseDraftLine) {
     const query = line.articleQuery.trim().toLowerCase();
-    const source = articles.data ?? [];
+    const source = articleOptions;
     if (!query) return source.slice(0, 8);
     return source.filter((article) => [article.articleCode, article.commercialName, article.dci, article.dosage].some((value) => String(value ?? '').toLowerCase().includes(query))).slice(0, 8);
   }
@@ -213,7 +229,7 @@ export function NewPurchasePage() {
         </div>
       </section>
       <section className="card compact-card purchase-page-grid">
-        <div className="erp-toolbar compact-toolbar">
+        <div className="erp-toolbar compact-toolbar purchase-toolbar">
           <button className="ghost-button compact-button" type="button" onClick={() => addLine()}>+ Ajouter ligne</button>
           <button className="ghost-button compact-button" type="button" onClick={duplicateSelectedLine} disabled={!selectedLineId}>Dupliquer</button>
           <button className="ghost-button compact-button" type="button" onClick={removeSelectedLine} disabled={!selectedLineId}>Supprimer</button>
@@ -239,7 +255,7 @@ export function NewPurchasePage() {
       </section>
       <div className="page-actions">
         <Link className="ghost-button compact-button" to="/purchases">Annuler</Link>
-        <button className="button compact-button" disabled={create.isPending || suppliers.isLoading || sites.isLoading || articles.isLoading || hasBlockingError}>{create.isPending ? 'Enregistrement...' : 'Enregistrer Brouillon'}</button>
+        <button className="button compact-button" disabled={create.isPending || suppliers.isLoading || sites.isLoading || articlesLoading || hasBlockingError}>{create.isPending ? 'Enregistrement...' : 'Enregistrer Brouillon'}</button>
         <button className="button compact-button" type="button" disabled title="Disponible apres creation du brouillon">Valider Achat</button>
       </div>
     </form>
@@ -264,6 +280,10 @@ function PurchaseGridRow(props: { action?: ReactNode; activeAutocomplete: string
 
 function ArticleCell({ activeAutocomplete, formById, handleGridKey, line, rowIndex, selectArticle, setActiveAutocomplete, setSelectedLineId, suggestions, updateLine }: { activeAutocomplete: string; article?: Article; formById: Map<string, string>; handleGridKey: (event: KeyboardEvent<HTMLElement>, row: number, col: number, lineId: string) => void; line: PurchaseDraftLine; rowIndex: number; selectArticle: (lineId: string, article: Article) => void; setActiveAutocomplete: (id: string) => void; setSelectedLineId: (id: string) => void; suggestions: Article[]; updateLine: (patch: Partial<PurchaseDraftLine>) => void }) {
   const isOpen = activeAutocomplete === line.id;
+  const updateArticleQuery = (value: string) => {
+    setActiveAutocomplete(line.id);
+    updateLine({ articleQuery: value, articleId: '' });
+  };
 
   return <td className="autocomplete-cell sticky-article-cell">
     <input
@@ -272,7 +292,9 @@ function ArticleCell({ activeAutocomplete, formById, handleGridKey, line, rowInd
       placeholder="Code, nom, DCI..."
       value={line.articleQuery}
       onBlur={() => window.setTimeout(() => setActiveAutocomplete(''), 120)}
+      onClick={() => { setSelectedLineId(line.id); setActiveAutocomplete(line.id); }}
       onFocus={() => { setSelectedLineId(line.id); setActiveAutocomplete(line.id); }}
+      onMouseDown={() => { setSelectedLineId(line.id); setActiveAutocomplete(line.id); }}
       onKeyDown={(event) => {
         if (event.key === 'Enter' && isOpen && suggestions[0]) {
           event.preventDefault();
@@ -281,10 +303,8 @@ function ArticleCell({ activeAutocomplete, formById, handleGridKey, line, rowInd
         }
         handleGridKey(event, rowIndex, 0, line.id);
       }}
-      onChange={(event) => {
-        setActiveAutocomplete(line.id);
-        updateLine({ articleQuery: event.target.value, articleId: '' });
-      }}
+      onChange={(event) => updateArticleQuery(event.target.value)}
+      onInput={(event) => updateArticleQuery(event.currentTarget.value)}
     />
     {isOpen && suggestions.length > 0 && <div className="autocomplete-menu">
       {suggestions.map((suggestion) => <button type="button" key={suggestion.articleId} onMouseDown={(event) => { event.preventDefault(); selectArticle(line.id, suggestion); }}>
