@@ -4,13 +4,15 @@ import { Link } from 'react-router-dom';
 import { Article, articlesService } from '../../services/articles.service';
 import { apiErrorMessage } from '../../services/apiError';
 import { codeGeneratorService } from '../../services/codeGenerator.service';
-import { purchasesService, Purchase } from '../../services/purchases.service';
+import { purchasesService, Purchase, PurchaseItem } from '../../services/purchases.service';
 import { referenceService } from '../../services/reference.service';
 import { sitesService } from '../../services/sites.service';
 import { stocksService } from '../../services/stocks.service';
 import { Modal } from '../../components/Modal';
 import { SearchBox } from '../../components/SearchBox';
 import { filterRows } from '../../lib/search';
+import { formatDate, fileDateStamp } from '../../utils/date';
+import { downloadCsv, downloadJson, downloadXlsx } from '../../utils/export';
 import { formatMoney } from '../../utils/money';
 
 type PurchaseForm = {
@@ -76,6 +78,66 @@ function statusBadge(status: string) {
   return 'badge-muted';
 }
 
+function purchaseExportRows(purchases: Purchase[]) {
+  return [
+    ['Numero achat', 'Fournisseur', 'Site', 'Date', 'Devise', 'Total', 'Statut'],
+    ...purchases.map((purchase) => [
+      purchase.purchaseNumber,
+      purchase.supplierName ?? '-',
+      purchase.siteName ?? '-',
+      formatDate(purchase.purchaseDate),
+      purchase.currencyCode ?? 'USD',
+      formatMoney(purchase.totalAmount, purchase.currencyCode ?? 'USD', purchase.currencySymbol),
+      purchase.status,
+    ]),
+  ];
+}
+
+function purchaseDetailExportRows(purchases: Purchase[]) {
+  return [
+    ['Numero achat', 'Fournisseur', 'Site', 'Date achat', 'Devise', 'Statut', 'Article', 'Lot', 'Date expiration', 'Quantite', 'Prix achat', 'Prix vente', 'Total ligne'],
+    ...purchases.flatMap((purchase) => (purchase.items ?? []).map((item) => [
+      purchase.purchaseNumber,
+      purchase.supplierName ?? '-',
+      purchase.siteName ?? '-',
+      formatDate(purchase.purchaseDate),
+      purchase.currencyCode ?? 'USD',
+      purchase.status,
+      item.commercialName ?? item.articleCode ?? '-',
+      item.lotNumber,
+      formatDate(item.expiryDate),
+      item.quantity,
+      formatMoney(item.purchaseUnitPrice, purchase.currencyCode ?? 'USD', purchase.currencySymbol),
+      formatMoney(item.sellingUnitPrice, purchase.currencyCode ?? 'USD', purchase.currencySymbol),
+      formatMoney(item.lineTotal, purchase.currencyCode ?? 'USD', purchase.currencySymbol),
+    ])),
+  ];
+}
+
+function purchaseExportObject(purchase: Purchase) {
+  return {
+    numeroAchat: purchase.purchaseNumber,
+    fournisseur: purchase.supplierName ?? '-',
+    site: purchase.siteName ?? '-',
+    date: formatDate(purchase.purchaseDate),
+    devise: purchase.currencyCode ?? 'USD',
+    total: formatMoney(purchase.totalAmount, purchase.currencyCode ?? 'USD', purchase.currencySymbol),
+    statut: purchase.status,
+  };
+}
+
+function purchaseItemExportObject(purchase: Purchase, item: PurchaseItem) {
+  return {
+    article: item.commercialName ?? item.articleCode ?? '-',
+    lot: item.lotNumber,
+    dateExpiration: formatDate(item.expiryDate),
+    quantite: item.quantity,
+    prixAchat: formatMoney(item.purchaseUnitPrice, purchase.currencyCode ?? 'USD', purchase.currencySymbol),
+    prixVente: formatMoney(item.sellingUnitPrice, purchase.currencyCode ?? 'USD', purchase.currencySymbol),
+    totalLigne: formatMoney(item.lineTotal, purchase.currencyCode ?? 'USD', purchase.currencySymbol),
+  };
+}
+
 function yyyymmdd(value: string) {
   return (value || new Date().toISOString().slice(0, 10)).replace(/-/g, '');
 }
@@ -127,6 +189,8 @@ export function PurchasesPage() {
   const [draftLines, setDraftLines] = useState<PurchaseDraftLine[]>([]);
   const [quickLine, setQuickLine] = useState<PurchaseDraftLine>(newLine());
   const [clientError, setClientError] = useState('');
+  const [exportError, setExportError] = useState('');
+  const [exportBusy, setExportBusy] = useState(false);
 
   const purchases = useQuery({ queryKey: ['purchases', status], queryFn: async () => (await purchasesService.getAll(status)).data });
   const suppliers = useQuery({ queryKey: ['suppliers'], queryFn: async () => (await referenceService.suppliers.getAll()).data });
@@ -160,7 +224,10 @@ export function PurchasesPage() {
     purchase.supplierName,
     purchase.status,
     purchase.purchaseDate,
+    formatDate(purchase.purchaseDate),
     purchase.siteName,
+    purchase.totalAmount,
+    purchase.currencyCode,
   ]), [purchases.data, search]);
 
   const lineIssues = useMemo(() => new Map(draftLines.map((line) => [line.id, issueForLine(line)])), [draftLines]);
@@ -396,6 +463,41 @@ export function PurchasesPage() {
     }
   }
 
+  async function exportRows(format: 'xlsx' | 'csv' | 'json', withDetails = false) {
+    setExportError('');
+    setExportBusy(true);
+    try {
+      const stamp = fileDateStamp();
+      if (!withDetails) {
+        const purchaseRows = purchaseExportRows(rows);
+        if (format === 'xlsx') downloadXlsx(`achats_${stamp}.xlsx`, [{ name: 'Achats', rows: purchaseRows }]);
+        if (format === 'csv') downloadCsv(`achats_${stamp}.csv`, purchaseRows);
+        if (format === 'json') downloadJson(`achats_${stamp}.json`, rows.map(purchaseExportObject));
+        return;
+      }
+
+      const detailed = await Promise.all(rows.map(async (purchase) => {
+        if (purchase.items) return purchase;
+        return (await purchasesService.getById(purchase.purchaseId)).data;
+      }));
+      const purchaseRows = purchaseExportRows(detailed);
+      const detailRows = purchaseDetailExportRows(detailed);
+      if (format === 'xlsx') downloadXlsx(`achats_details_${stamp}.xlsx`, [
+        { name: 'Achats', rows: purchaseRows },
+        { name: 'Details achats', rows: detailRows },
+      ]);
+      if (format === 'csv') downloadCsv(`achats_details_${stamp}.csv`, detailRows);
+      if (format === 'json') downloadJson(`achats_details_${stamp}.json`, detailed.map((purchase) => ({
+        ...purchaseExportObject(purchase),
+        lignes: (purchase.items ?? []).map((item) => purchaseItemExportObject(purchase, item)),
+      })));
+    } catch (error) {
+      setExportError(apiErrorMessage(error));
+    } finally {
+      setExportBusy(false);
+    }
+  }
+
   const selectedPurchase = detail.data;
   const detailItems = selectedPurchase?.items ?? [];
   const detailTotal = detailItems.reduce((sum, item) => sum + Number(item.lineTotal ?? 0), 0);
@@ -419,7 +521,28 @@ export function PurchasesPage() {
           <option value="DRAFT">Brouillon</option>
           <option value="VALIDATED">Valide</option>
         </select>
+        <div className="export-actions">
+          <details className="export-menu">
+            <summary className="ghost-button compact-button">Exporter</summary>
+            <div className="export-menu-panel">
+              <button type="button" disabled={rows.length === 0 || exportBusy} onClick={() => exportRows('xlsx')}>Excel</button>
+              <button type="button" disabled={rows.length === 0 || exportBusy} onClick={() => exportRows('csv')}>CSV</button>
+              <button type="button" disabled={rows.length === 0 || exportBusy} onClick={() => exportRows('json')}>JSON</button>
+              <button type="button" disabled>PDF</button>
+            </div>
+          </details>
+          <details className="export-menu">
+            <summary className="ghost-button compact-button">Exporter avec details</summary>
+            <div className="export-menu-panel">
+              <button type="button" disabled={rows.length === 0 || exportBusy} onClick={() => exportRows('xlsx', true)}>Excel</button>
+              <button type="button" disabled={rows.length === 0 || exportBusy} onClick={() => exportRows('csv', true)}>CSV</button>
+              <button type="button" disabled={rows.length === 0 || exportBusy} onClick={() => exportRows('json', true)}>JSON</button>
+              <button type="button" disabled>PDF</button>
+            </div>
+          </details>
+        </div>
       </div>
+      {exportError && <p className="form-error">{exportError}</p>}
 
       <div className="card">
         {purchases.isLoading ? <p className="loading-state">Chargement des achats...</p> : rows.length === 0 ? <p className="empty-state">Aucun achat trouve. Ajustez la recherche ou creez un nouvel achat.</p> : (
@@ -431,10 +554,10 @@ export function PurchasesPage() {
                   <td><strong>{purchase.purchaseNumber}</strong></td>
                   <td>{purchase.supplierName ?? '-'}</td>
                   <td>{purchase.siteName ?? '-'}</td>
-                  <td>{purchase.purchaseDate}</td>
-                  <td>{formatMoney(purchase.totalAmount, purchase.currencyCode ?? 'USD', purchase.currencySymbol)}</td>
-                  <td><span className={`badge ${statusBadge(purchase.status)}`}>{purchase.status}</span></td>
-                  <td><button className="ghost-button" type="button" onClick={(event) => { event.stopPropagation(); setSelectedPurchaseId(purchase.purchaseId); }}>Voir</button></td>
+                  <td>{formatDate(purchase.purchaseDate)}</td>
+                  <td className="numeric-text">{formatMoney(purchase.totalAmount, purchase.currencyCode ?? 'USD', purchase.currencySymbol)}</td>
+                  <td><span className={`badge compact-badge ${statusBadge(purchase.status)}`}>{purchase.status}</span></td>
+                  <td><button className="ghost-button compact-button" type="button" onClick={(event) => { event.stopPropagation(); setSelectedPurchaseId(purchase.purchaseId); }}>Voir</button></td>
                 </tr>
               ))}</tbody>
             </table>
@@ -601,7 +724,7 @@ function PurchaseDetailModal({
     <div className="purchase-detail">
       <div className="detail-grid">
         <div><span>Code</span><strong>{purchase.purchaseNumber}</strong></div>
-        <div><span>Date</span><strong>{purchase.purchaseDate}</strong></div>
+        <div><span>Date</span><strong>{formatDate(purchase.purchaseDate)}</strong></div>
         <div><span>Fournisseur</span><strong>{purchase.supplierName ?? '-'}</strong></div>
         <div><span>Site</span><strong>{purchase.siteName ?? '-'}</strong></div>
         <div><span>Statut</span><strong><span className={`badge ${statusBadge(purchase.status)}`}>{purchase.status}</span></strong></div>
@@ -611,14 +734,17 @@ function PurchaseDetailModal({
       </div>
 
       <div className="table-wrap">
-        <table className="data-table">
-          <thead><tr><th>Article</th><th>Quantite</th><th>Prix achat</th><th>Total ligne</th></tr></thead>
+        <table className="data-table purchase-detail-table">
+          <thead><tr><th>Article</th><th>Lot</th><th>Expiration</th><th>Quantite</th><th>Prix achat</th><th>Prix vente</th><th>Total ligne</th></tr></thead>
           <tbody>{(purchase.items ?? []).map((item) => (
             <tr key={item.purchaseItemId}>
               <td>{item.commercialName ?? item.articleCode ?? '-'}</td>
-              <td>{item.quantity}</td>
-              <td>{formatMoney(item.purchaseUnitPrice, currencyCode, currencySymbol)}</td>
-              <td>{formatMoney(item.lineTotal, currencyCode, currencySymbol)}</td>
+              <td>{item.lotNumber}</td>
+              <td>{formatDate(item.expiryDate)}</td>
+              <td className="quantity-cell">{item.quantity}</td>
+              <td className="numeric-text">{formatMoney(item.purchaseUnitPrice, currencyCode, currencySymbol)}</td>
+              <td className="numeric-text">{formatMoney(item.sellingUnitPrice, currencyCode, currencySymbol)}</td>
+              <td className="numeric-text">{formatMoney(item.lineTotal, currencyCode, currencySymbol)}</td>
             </tr>
           ))}</tbody>
         </table>

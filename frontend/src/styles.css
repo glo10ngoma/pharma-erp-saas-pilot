@@ -367,6 +367,12 @@ details.nav-group .nav-link {
   padding: 4px 9px;
 }
 
+.compact-badge {
+  font-size: .7rem;
+  line-height: 1;
+  padding: 3px 7px;
+}
+
 .badge-success {
   background: #dcfce7;
   color: var(--success);
@@ -459,6 +465,71 @@ details.nav-group .nav-link {
   justify-content: space-between;
 }
 
+.export-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.export-menu {
+  position: relative;
+}
+
+.export-menu summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.export-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.export-menu[open] summary {
+  background: var(--surface-soft);
+}
+
+.export-menu-panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  display: none;
+  min-width: 160px;
+  overflow: hidden;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 70;
+}
+
+.export-menu[open] .export-menu-panel {
+  display: grid;
+}
+
+.export-menu-panel button {
+  background: var(--surface);
+  border: 0;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-size: .86rem;
+  padding: 7px 12px;
+  text-align: left;
+  width: 100%;
+}
+
+.export-menu-panel button:hover:not(:disabled) {
+  background: var(--surface-soft);
+}
+
+.export-menu-panel button:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+  opacity: .58;
+}
+
 .sales-filters {
   display: grid;
   gap: 12px;
@@ -497,6 +568,36 @@ details.nav-group .nav-link {
   color: var(--text);
   margin-top: 0;
   width: auto;
+}
+
+.purchase-table {
+  min-width: 920px;
+}
+
+.purchase-table th,
+.purchase-table td,
+.purchase-detail-table th,
+.purchase-detail-table td {
+  padding: 6px 8px;
+  vertical-align: middle;
+}
+
+.purchase-table th,
+.purchase-detail-table th {
+  font-size: .72rem;
+}
+
+.purchase-table td {
+  font-size: .9rem;
+}
+
+.purchase-table .compact-button {
+  min-height: 28px;
+  padding: 4px 8px;
+}
+
+.quantity-cell {
+  text-align: center;
 }
 
 .clickable-row {

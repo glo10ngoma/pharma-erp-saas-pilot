@@ -23,6 +23,22 @@ Ce document formalise progressivement l'identite visuelle de l'ERP Pharmaceutiqu
 - La page `/purchases/new` est la reference UX pour les flux complexes : breadcrumb, informations generales compactes, grille metier centrale, resume temps reel et actions en bas de page.
 - Les futurs modules Ventes, Inventaires, Transferts et Retours doivent reprendre ce modele quand ils manipulent plusieurs lignes.
 
+## Reference Flux Metier Complexe
+
+La page `/purchases/new` - Nouvel Achat - est desormais le modele UI/UX de reference pour les futurs flux metier complexes.
+
+- Utiliser une page complete, pas une modal, lorsque le flux demande une saisie longue, multi-lignes ou transactionnelle.
+- Presenter une experience ERP professionnelle : informations generales en haut, grille centrale dense, resume temps reel en bas et boutons principaux toujours visibles.
+- La grille doit rester compacte et visible sans scroll horizontal sur ecran Full HD.
+- La colonne Article ou Produit est prioritaire et doit recevoir la plus grande largeur disponible.
+- Les colonnes `Qte`, `PA`, `PV` et `Total` restent compactes, lisibles, centrees ou alignees a droite selon leur nature.
+- Les actions de ligne utilisent uniquement des icones : `+` pour ajouter et corbeille pour supprimer.
+- Le selecteur Article doit s'ouvrir dans un popover flottant via portal afin de ne pas etre coupe par la grille ou le scroll horizontal.
+- Les themes light et dark doivent rester parfaitement lisibles : contrastes, bordures, hover, icones et etats de validation.
+- Le resume temps reel affiche les totaux, quantites et indicateurs financiers sans attendre l'enregistrement.
+- Les boutons principaux restent visibles et clairement hierarchises : annuler, enregistrer, valider.
+- Ce modele doit etre applique progressivement aux flux : Ventes / POS, Inventaires, Transferts, Retours et Saisie comptable.
+
 ## Tableaux
 
 - En-tetes lisibles avec contraste suffisant en light et dark mode.
