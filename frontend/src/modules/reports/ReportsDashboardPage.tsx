@@ -1,9 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiErrorMessage } from '../../services/apiError';
+import { articlesService } from '../../services/articles.service';
+import { lotsService } from '../../services/lots.service';
 import { reportsService, ReportFilters } from '../../services/reports.service';
 import { sitesService } from '../../services/sites.service';
+import { stocksService } from '../../services/stocks.service';
 import { formatMoney } from '../../utils/money';
+import { buildFefoRiskRows, buildRotationKpis, buildRotationRows } from '../fefo/fefo-utils';
 
 const moneyKeys = new Set(['totalAmount', 'patientAmount', 'insuranceAmount', 'purchaseValue', 'saleValue', 'revenue', 'estimatedCost', 'grossMargin', 'amountDue', 'amountPaid', 'balance', 'amount']);
 
@@ -20,8 +24,16 @@ export function ReportsDashboardPage() {
   const expiry = useQuery({ queryKey: [...queryKey, 'expiry'], queryFn: async () => (await reportsService.expiry(filters)).data });
   const topProducts = useQuery({ queryKey: [...queryKey, 'top-products'], queryFn: async () => (await reportsService.topProducts(filters)).data });
   const sites = useQuery({ queryKey: ['sites'], queryFn: async () => (await sitesService.getAll()).data });
+  const lots = useQuery({ queryKey: ['lots', 'reports-fefo'], queryFn: async () => (await lotsService.getAll()).data });
+  const stocks = useQuery({ queryKey: ['stocks', 'reports-fefo'], queryFn: async () => (await stocksService.getAll()).data });
+  const articles = useQuery({ queryKey: ['articles', 'reports-fefo'], queryFn: async () => (await articlesService.getAll({ limit: 1000 })).data.items });
   const error = [dashboard, sales, stock, margins, cash, receivables, expiry, topProducts].find((q) => q.isError)?.error;
   const kpis = dashboard.data;
+  const fefoHealth = useMemo(() => {
+    const riskRows = buildFefoRiskRows(lots.data ?? [], stocks.data ?? [], articles.data ?? [])
+      .filter((row) => !filters.siteId || row.siteId === filters.siteId);
+    return buildRotationKpis(buildRotationRows(riskRows)).health;
+  }, [lots.data, stocks.data, articles.data, filters.siteId]);
   const cards = useMemo(() => kpis ? [
     ['CA jour', kpis.revenueToday],
     ['CA mois', kpis.revenueMonth],
@@ -36,7 +48,8 @@ export function ReportsDashboardPage() {
     ['Expiration 30j', kpis.expiring30DaysCount],
     ['Expiration 90j', kpis.expiring90DaysCount],
     ['Stock faible', kpis.lowStockProductsCount],
-  ] : [], [kpis]);
+    ['FEFO Sante', `${fefoHealth} %`],
+  ] : [], [kpis, fefoHealth]);
 
   return <>
     <h1>Dashboard BI</h1>

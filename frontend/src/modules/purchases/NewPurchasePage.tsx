@@ -169,7 +169,7 @@ export function NewPurchasePage() {
     const query = line.articleQuery.trim().toLowerCase();
     const source = articleOptions;
     if (!query) return source;
-    return source.filter((article) => [article.articleCode, article.commercialName, article.dci, article.dosage].some((value) => String(value ?? '').toLowerCase().includes(query)));
+    return prioritizeExactBarcode(source.filter((article) => [article.articleCode, article.commercialName, article.dci, article.dosage, article.barcode].some((value) => String(value ?? '').toLowerCase().includes(query))), line.articleQuery);
   }
   function validateDraftLines() {
     if (draftLines.length === 0) return 'Ajoutez au moins une ligne achat.';
@@ -309,6 +309,7 @@ function SharedArticleCell({ activeAutocomplete, currencyCode, handleGridKey, li
     <FloatingSearchPopover
       columns={[
         { header: 'Code', render: (article) => article.articleCode },
+        { header: 'Barcode', render: (article) => article.barcode ?? '-' },
         { header: 'Nom', render: (article) => <strong>{article.commercialName}</strong> },
         { header: 'DCI', render: (article) => article.dci ?? '-' },
         { header: 'Dosage', render: (article) => article.dosage ?? '-' },
@@ -324,12 +325,18 @@ function SharedArticleCell({ activeAutocomplete, currencyCode, handleGridKey, li
       onOpen={() => { setSelectedLineId(line.id); setActiveAutocomplete(line.id); }}
       onSelect={(article) => selectArticle(line.id, article)}
       open={isOpen}
-      placeholder="Code, nom, DCI..."
-      searchPlaceholder="Rechercher (code, nom, DCI, dosage...)"
+      placeholder="Scanner code-barres ou rechercher article..."
+      searchPlaceholder="Rechercher (code, nom, DCI, dosage, barcode...)"
       suggestions={suggestions}
       value={line.articleQuery}
     />
   </td>;
+}
+
+function prioritizeExactBarcode(articles: Article[], query: string) {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return articles;
+  return [...articles].sort((a, b) => Number(String(b.barcode ?? '').toLowerCase() === needle) - Number(String(a.barcode ?? '').toLowerCase() === needle));
 }
 
 function QuickEntryRow(props: { activeAutocomplete: string; article?: Article; commitQuickLine: () => void; currencyCode: string; handleGridKey: (event: KeyboardEvent<HTMLElement>, row: number, col: number, lineId: string) => void; issue: LineIssue; line: PurchaseDraftLine; rowIndex: number; selectArticle: (lineId: string, article: Article) => void; setActiveAutocomplete: (id: string) => void; setSelectedLineId: (id: string) => void; stockByArticle: Map<string, number>; suggestions: Article[]; updateQuickLine: (patch: Partial<PurchaseDraftLine>) => void }) {

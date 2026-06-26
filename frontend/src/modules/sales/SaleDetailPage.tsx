@@ -1,11 +1,77 @@
 import { useQuery } from '@tanstack/react-query';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { salesService } from '../../services/sales.service';
+import { formatDate } from '../../utils/date';
 import { formatMoney } from '../../utils/money';
 
 export function SaleDetailPage() {
   const { id = '' } = useParams();
   const query = useQuery({ queryKey: ['sale', id], queryFn: async () => (await salesService.getById(id)).data });
   const sale = query.data;
-  return <><h1>Detail vente</h1>{!sale?<div className="card">Chargement...</div>:<><div className="card"><strong>{sale.saleNumber}</strong><p>{sale.status} - {formatMoney(sale.totalAmount, sale.currencyCode ?? 'USD', sale.currencySymbol)}</p></div><div className="card"><table className="data-table"><thead><tr><th>Produit</th><th>Lot</th><th>Expiration</th><th>Qte</th><th>Prix</th><th>Total</th></tr></thead><tbody>{(sale.items??[]).map(i=><tr key={i.saleItemId}><td>{i.commercialName}</td><td>{i.lotNumber}</td><td>{i.expiryDate}</td><td>{i.quantity}</td><td>{formatMoney(i.unitPrice, sale.currencyCode ?? 'USD', sale.currencySymbol)}</td><td>{formatMoney(i.lineTotal, sale.currencyCode ?? 'USD', sale.currencySymbol)}</td></tr>)}</tbody></table></div><div className="card"><table className="data-table"><thead><tr><th>Date</th><th>Methode</th><th>Montant</th></tr></thead><tbody>{(sale.payments??[]).map(p=><tr key={p.paymentId}><td>{p.paymentDate}</td><td>{p.methodName}</td><td>{formatMoney(p.amount, p.currencyCode ?? sale.currencyCode ?? 'USD', p.currencySymbol ?? sale.currencySymbol)}</td></tr>)}</tbody></table></div></>}</>;
+  const currencyCode = sale?.currencyCode ?? 'USD';
+  const currencySymbol = sale?.currencySymbol;
+  const items = sale?.items ?? [];
+  const payments = sale?.payments ?? [];
+
+  return (
+    <div className="purchase-page sale-detail-page">
+      <div className="breadcrumb"><Link to="/sales">Ventes</Link><span>&gt;</span><strong>{sale?.saleNumber ?? 'Detail vente'}</strong></div>
+      {!sale ? <div className="card"><p className="loading-state">Chargement du detail vente...</p></div> : <>
+        <div className="purchase-sticky-header transfer-sticky-header">
+          <div><span>Numero</span><strong>{sale.saleNumber}</strong></div>
+          <div><span>Date</span><strong>{formatDate(sale.saleDate)}</strong></div>
+          <div><span>Client</span><strong>{sale.customerName || 'Comptoir'}</strong></div>
+          <div><span>Type</span><strong>{sale.saleType}</strong></div>
+          <div><span>Total</span><strong>{formatMoney(sale.totalAmount, currencyCode, currencySymbol)}</strong></div>
+          <div><span>Statut</span><strong><span className={`badge ${sale.status === 'VALIDATED' ? 'badge-success' : 'badge-warning'}`}>{sale.status}</span></strong></div>
+        </div>
+
+        <section className="card compact-card">
+          <div className="detail-grid">
+            <div><span>Site</span><strong>{sale.siteName ?? '-'}</strong></div>
+            <div><span>Assurance</span><strong>{sale.organizationName ?? '-'}</strong></div>
+            <div><span>Plan</span><strong>{sale.planName ?? '-'}</strong></div>
+            <div><span>Part patient</span><strong>{formatMoney(sale.customerPayableAmount, currencyCode, currencySymbol)}</strong></div>
+            <div><span>Part assurance</span><strong>{formatMoney(sale.insuranceCoveredAmount, currencyCode, currencySymbol)}</strong></div>
+            <div><span>Creance</span><strong>{formatMoney(sale.creditAmount, currencyCode, currencySymbol)}</strong></div>
+          </div>
+        </section>
+
+        <section className="card compact-card">
+          <h3>Produits</h3>
+          <div className="table-wrap">
+            <table className="data-table sales-table">
+              <thead><tr><th>Produit</th><th>Lot</th><th>Expiration</th><th>Qte</th><th>Prix</th><th>Total</th></tr></thead>
+              <tbody>{items.length === 0 ? <tr><td colSpan={6}>Aucun produit.</td></tr> : items.map((item) => <tr key={item.saleItemId}><td>{item.commercialName}</td><td>{item.lotNumber}</td><td>{item.expiryDate ? formatDate(item.expiryDate) : '-'}</td><td className="quantity-cell">{item.quantity}</td><td className="numeric-text">{formatMoney(item.unitPrice, currencyCode, currencySymbol)}</td><td className="numeric-text">{formatMoney(item.lineTotal, currencyCode, currencySymbol)}</td></tr>)}</tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="card compact-card">
+          <h3>Paiements</h3>
+          <div className="table-wrap">
+            <table className="data-table sales-table">
+              <thead><tr><th>Date</th><th>Methode</th><th>Montant</th><th>Utilisateur</th></tr></thead>
+              <tbody>{payments.length === 0 ? <tr><td colSpan={4}>Aucun paiement.</td></tr> : payments.map((payment) => <tr key={payment.paymentId}><td>{formatDate(payment.paymentDate)}</td><td>{payment.methodName}</td><td className="numeric-text">{formatMoney(payment.amount, payment.currencyCode ?? currencyCode, payment.currencySymbol ?? currencySymbol)}</td><td>{payment.receivedByName ?? '-'}</td></tr>)}</tbody>
+            </table>
+          </div>
+        </section>
+
+        <div className="page-actions">
+          <Link className="ghost-button compact-button" to="/sales">Retour</Link>
+          <button className="button compact-button" type="button" onClick={() => window.print()}>Imprimer Facture</button>
+        </div>
+
+        <div className="print-invoice">
+          <h1>PharmaERP</h1>
+          <p>Facture {sale.saleNumber}</p>
+          <p>Date: {formatDate(sale.saleDate)}</p>
+          <p>Client: {sale.customerName || 'Comptoir'}</p>
+          <table><tbody>{items.map((item) => <tr key={item.saleItemId}><td>{item.commercialName}</td><td>{item.quantity}</td><td>{formatMoney(item.lineTotal, currencyCode, currencySymbol)}</td></tr>)}</tbody></table>
+          <h2>Total: {formatMoney(sale.totalAmount, currencyCode, currencySymbol)}</h2>
+          <p>Merci pour votre confiance.</p>
+        </div>
+      </>}
+    </div>
+  );
 }

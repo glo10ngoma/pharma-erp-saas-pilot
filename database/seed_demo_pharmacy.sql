@@ -26,6 +26,7 @@ CREATE TEMP TABLE demo_product_data (
   type_code TEXT,
   type_name TEXT,
   atc_code TEXT,
+  barcode TEXT,
   prescription_required BOOLEAN,
   purchase_price NUMERIC(14,2),
   selling_price NUMERIC(14,2),
@@ -94,6 +95,7 @@ SELECT
   'PHD-' || type_code AS type_code,
   'Demo ' || type_name AS type_name,
   atc_code,
+  '620' || lpad((1000000000 + rn)::TEXT, 10, '0') AS barcode,
   prescription_required,
   round(purchase_price * price_factor, 2),
   round(selling_price * price_factor, 2),
@@ -289,7 +291,7 @@ SET tenant_id = EXCLUDED.tenant_id,
 INSERT INTO articles(
   tenant_id, article_code, commercial_name, dci, category_id, sub_category_id,
   form_id, route_id, product_type_id, dosage, packaging, atc_code,
-  prescription_required, default_stock_min, default_stock_max, is_active, updated_at
+  barcode, prescription_required, default_stock_min, default_stock_max, is_active, updated_at
 )
 SELECT
   t.tenant_id,
@@ -304,6 +306,7 @@ SELECT
   d.dosage,
   split_part(d.commercial_name, ' - ', 2),
   d.atc_code,
+  d.barcode,
   d.prescription_required,
   d.stock_min,
   d.stock_min * 10,
@@ -329,6 +332,7 @@ SET tenant_id = EXCLUDED.tenant_id,
     dosage = EXCLUDED.dosage,
     packaging = EXCLUDED.packaging,
     atc_code = EXCLUDED.atc_code,
+    barcode = EXCLUDED.barcode,
     prescription_required = EXCLUDED.prescription_required,
     default_stock_min = EXCLUDED.default_stock_min,
     default_stock_max = EXCLUDED.default_stock_max,

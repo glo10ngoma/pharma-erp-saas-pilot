@@ -9,6 +9,7 @@ export const salesService = {
   getById: (id: string) => apiClient.get<Sale>(`/sales/${id}`),
   create: (payload: Record<string, unknown>) => apiClient.post<Sale>('/sales', payload),
   addItemFefo: (saleId: string, payload: Record<string, unknown>) => apiClient.post<Sale>(`/sales/${saleId}/items/fefo`, payload),
+  removeItem: (saleId: string, itemId: string) => apiClient.delete<Sale>(`/sales/${saleId}/items/${itemId}`),
   applyInsurance: (saleId: string, payload: Record<string, unknown>) => apiClient.post<Sale>(`/sales/${saleId}/apply-insurance`, payload),
   validate: (saleId: string, payload: Record<string, unknown>) => apiClient.post<Sale>(`/sales/${saleId}/validate`, payload),
   cancel: (saleId: string) => apiClient.post<Sale>(`/sales/${saleId}/cancel`),

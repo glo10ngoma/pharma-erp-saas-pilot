@@ -48,6 +48,8 @@ export function DashboardLayout() {
       links: [
         ['/purchases', 'Achats', 'purchases.read'],
         ['/lots', 'Lots', 'lots.read'],
+        ['/fefo/highlight', 'Produits a mettre en avant', 'lots.read'],
+        ['/fefo/rotation', 'Rotation des rayons', 'lots.read'],
         ['/stocks', 'Stocks', 'stocks.read'],
         ['/transfers', 'Transferts', 'transfers.read'],
         ['/inventories', 'Inventaires', 'inventories.read'],

@@ -8,6 +8,8 @@ import { apiErrorMessage } from '../../services/apiError';
 import { referenceService } from '../../services/reference.service';
 import { Sale, salesService } from '../../services/sales.service';
 import { sitesService } from '../../services/sites.service';
+import { formatDate, fileDateStamp } from '../../utils/date';
+import { downloadCsv, downloadJson, downloadXlsx } from '../../utils/export';
 import { formatMoney } from '../../utils/money';
 
 type QuickFilter = 'ALL' | 'DRAFT' | 'VALIDATED' | 'CASH' | 'INSURANCE' | 'TODAY' | 'WEEK' | 'MONTH';
@@ -147,6 +149,14 @@ export function SalesPage() {
     create.mutate();
   }
 
+  function exportRows(format: 'xlsx' | 'csv' | 'json') {
+    const stamp = fileDateStamp();
+    const data = saleExportRows(rows);
+    if (format === 'xlsx') downloadXlsx(`ventes_${stamp}.xlsx`, [{ name: 'Ventes', rows: data }]);
+    if (format === 'csv') downloadCsv(`ventes_${stamp}.csv`, data);
+    if (format === 'json') downloadJson(`ventes_${stamp}.json`, rows.map(saleExportObject));
+  }
+
   return (
     <>
       <div className="toolbar">
@@ -170,6 +180,16 @@ export function SalesPage() {
               {filter.label}
             </button>
           ))}
+        </div>
+        <div className="export-actions sales-export-actions">
+          <details className="export-menu">
+            <summary className="ghost-button compact-button">Exporter</summary>
+            <div className="export-menu-panel">
+              <button type="button" disabled={rows.length === 0} onClick={() => exportRows('xlsx')}>Excel</button>
+              <button type="button" disabled={rows.length === 0} onClick={() => exportRows('csv')}>CSV</button>
+              <button type="button" disabled={rows.length === 0} onClick={() => exportRows('json')}>JSON</button>
+            </div>
+          </details>
         </div>
       </div>
 
@@ -197,7 +217,7 @@ export function SalesPage() {
                 {rows.map((sale) => (
                   <tr className="clickable-row" key={sale.saleId} onClick={() => setSelectedSaleId(sale.saleId)}>
                     <td><strong>{sale.saleNumber}</strong></td>
-                    <td>{new Date(sale.saleDate).toLocaleDateString('fr-FR')}</td>
+                    <td>{formatDate(sale.saleDate)}</td>
                     <td>{sale.customerName || 'Comptoir'}</td>
                     <td>{sale.siteName ?? '-'}</td>
                     <td><span className={`badge ${badgeForType(sale.saleType)}`}>{sale.saleType}</span></td>
@@ -298,7 +318,7 @@ function SaleDetailModal({ sale, onOpenPos }: { sale: Sale; onOpenPos: () => voi
     <div className="sale-detail">
       <div className="detail-grid">
         <div><span>Numero vente</span><strong>{sale.saleNumber}</strong></div>
-        <div><span>Date</span><strong>{new Date(sale.saleDate).toLocaleString('fr-FR')}</strong></div>
+        <div><span>Date</span><strong>{formatDate(sale.saleDate)}</strong></div>
         <div><span>Client</span><strong>{sale.customerName || 'Comptoir'}</strong></div>
         <div><span>Assurance</span><strong>{sale.organizationName ?? '-'}</strong></div>
         <div><span>Statut</span><strong><span className={`badge ${badgeForStatus(sale.status)}`}>{sale.status}</span></strong></div>
@@ -351,7 +371,7 @@ function SaleDetailModal({ sale, onOpenPos }: { sale: Sale; onOpenPos: () => voi
               <tbody>
                 {payments.map((payment) => (
                   <tr key={payment.paymentId}>
-                    <td>{new Date(payment.paymentDate).toLocaleString('fr-FR')}</td>
+                    <td>{formatDate(payment.paymentDate)}</td>
                     <td>{formatMoney(payment.amount, payment.currencyCode ?? currencyCode, payment.currencySymbol ?? currencySymbol)}</td>
                     <td>{payment.currencyCode ?? currencyCode}</td>
                     <td>{payment.methodName}</td>
@@ -379,4 +399,33 @@ function SaleDetailModal({ sale, onOpenPos }: { sale: Sale; onOpenPos: () => voi
       </div>
     </div>
   );
+}
+
+function saleExportRows(sales: Sale[]) {
+  return [
+    ['Numero', 'Date', 'Client', 'Assurance', 'Site', 'Type', 'Total', 'Statut'],
+    ...sales.map((sale) => [
+      sale.saleNumber,
+      formatDate(sale.saleDate),
+      sale.customerName || 'Comptoir',
+      sale.organizationName ?? '-',
+      sale.siteName ?? '-',
+      sale.saleType,
+      formatMoney(sale.totalAmount, sale.currencyCode ?? 'USD', sale.currencySymbol),
+      sale.status,
+    ]),
+  ];
+}
+
+function saleExportObject(sale: Sale) {
+  return {
+    numero: sale.saleNumber,
+    date: formatDate(sale.saleDate),
+    client: sale.customerName || 'Comptoir',
+    assurance: sale.organizationName ?? '-',
+    site: sale.siteName ?? '-',
+    type: sale.saleType,
+    total: formatMoney(sale.totalAmount, sale.currencyCode ?? 'USD', sale.currencySymbol),
+    statut: sale.status,
+  };
 }

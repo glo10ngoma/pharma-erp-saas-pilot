@@ -38,8 +38,17 @@ La page `/purchases/new` - Nouvel Achat - est desormais le modele UI/UX de refer
 - Le resume temps reel affiche les totaux, quantites et indicateurs financiers sans attendre l'enregistrement.
 - Les boutons principaux restent visibles et clairement hierarchises : annuler, enregistrer, valider.
 - Ce modele doit etre applique progressivement aux flux : Ventes / POS, Inventaires, Transferts, Retours et Saisie comptable.
+- Le POS est un flux metier critique : il doit rester une page complete, jamais une modal.
+- Le POS doit etre utilisable au clavier : `F2` recherche article, `Ctrl+Entree` validation, `Ctrl+L` recherche/ligne, `Ctrl+Suppr` suppression, `Echap` retour.
+- La recherche article est prioritaire dans le POS et doit etre compatible saisie rapide / futur scan barcode.
+- Le resume POS reste visible en permanence : total, part patient, part assurance, montant paye et monnaie.
+- La validation POS doit etre rapide, lisible et explicite sur l'etat caisse.
 - Le workflow Inventaire ERP est base sur un prechargement automatique de tous les lots actifs du site.
 - Dans un inventaire, l'utilisateur ne saisit que le stock physique et l'observation ; les ecarts, types et valeurs sont calcules automatiquement.
+- Le FEFO est un assistant decisionnel, pas seulement une regle automatique de vente.
+- Les ecrans FEFO doivent guider quotidiennement le personnel sur les produits a mettre en avant, les rotations de rayons, les risques de peremption et les actions recommandees.
+- Les alertes FEFO doivent etre explicites : orange pour les lots proches de 30 jours, rouge pour les lots critiques sous 7 jours ou deja expires.
+- Les vues FEFO restent en lecture seule : elles orientent les actions terrain sans modifier directement stock, ventes, inventaires ou lots.
 
 ## Tableaux
 

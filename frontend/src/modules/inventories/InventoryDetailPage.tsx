@@ -99,6 +99,15 @@ export function InventoryDetailPage() {
   }
 
   function chooseStock(stock: Stock) {
+    const existingIndex = rows.findIndex((item) => item.lotId === stock.lotId || item.articleId === stock.articleId);
+    const existing = rows[existingIndex];
+    if (existing) {
+      setSelectedLineId(existing.inventoryItemId);
+      setQuickLine(emptyQuickLine());
+      setQuickPickerOpen(false);
+      setTimeout(() => document.querySelector<HTMLElement>(`[data-grid-cell="${existingIndex}-physical"]`)?.focus(), 0);
+      return;
+    }
     setQuickLine({
       stockId: stock.stockId,
       query: `${stock.articleCode ?? ''} - ${stock.commercialName ?? ''} / ${stock.lotNumber}`,
@@ -194,6 +203,7 @@ export function InventoryDetailPage() {
                     <FloatingSearchPopover
                       columns={[
                         { header: 'Code', render: (stock) => stock.articleCode ?? '-' },
+                        { header: 'Barcode', render: (stock) => articleById.get(stock.articleId)?.barcode ?? '-' },
                         { header: 'Nom', render: (stock) => <strong>{stock.commercialName ?? '-'}</strong> },
                         { header: 'DCI', render: (stock) => articleById.get(stock.articleId)?.dci ?? '-' },
                         { header: 'Lot', render: (stock) => stock.lotNumber },
@@ -209,8 +219,8 @@ export function InventoryDetailPage() {
                       onOpen={() => setQuickPickerOpen(true)}
                       onSelect={chooseStock}
                       open={quickPickerOpen}
-                      placeholder="Article, lot..."
-                      searchPlaceholder="Rechercher (code, nom, DCI, lot, expiration, stock...)"
+                      placeholder="Scanner code-barres ou rechercher article/lot..."
+                      searchPlaceholder="Rechercher (code, nom, DCI, barcode, lot, expiration, stock...)"
                       suggestions={suggestions}
                       value={quickLine.query}
                     />
@@ -234,10 +244,12 @@ export function InventoryDetailPage() {
   );
 }
 
-function inventoryStockSuggestions(stocks: Stock[], query: string, articleById: Map<string, { dci: string | null }>) {
+function inventoryStockSuggestions(stocks: Stock[], query: string, articleById: Map<string, { dci: string | null; barcode: string | null }>) {
   const needle = query.trim().toLowerCase();
   if (!needle) return stocks;
-  return stocks.filter((stock) => [stock.articleCode, stock.commercialName, articleById.get(stock.articleId)?.dci, stock.lotNumber, stock.expiryDate, stock.quantityAvailable, stock.siteName].some((value) => String(value ?? '').toLowerCase().includes(needle)));
+  return stocks
+    .filter((stock) => [stock.articleCode, stock.commercialName, articleById.get(stock.articleId)?.dci, articleById.get(stock.articleId)?.barcode, stock.lotNumber, stock.expiryDate, stock.quantityAvailable, stock.siteName].some((value) => String(value ?? '').toLowerCase().includes(needle)))
+    .sort((a, b) => Number(String(articleById.get(b.articleId)?.barcode ?? '').toLowerCase() === needle) - Number(String(articleById.get(a.articleId)?.barcode ?? '').toLowerCase() === needle));
 }
 
 function inventoryTotals(items: InventoryItem[], prices: Map<string, { purchasePrice: number }>) {

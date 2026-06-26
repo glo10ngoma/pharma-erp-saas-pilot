@@ -14,6 +14,8 @@ import { SubCategoriesPage } from './modules/reference/SubCategoriesPage';
 import { SuppliersPage } from './modules/reference/SuppliersPage';
 import { PermissionsPage } from './modules/permissions/PermissionsPage';
 import { LotsPage } from './modules/lots/LotsPage';
+import { FefoHighlightPage } from './modules/fefo/FefoHighlightPage';
+import { FefoRotationPage } from './modules/fefo/FefoRotationPage';
 import { NewPurchasePage } from './modules/purchases/NewPurchasePage';
 import { PurchaseDetailPage } from './modules/purchases/PurchaseDetailPage';
 import { PurchasesPage } from './modules/purchases/PurchasesPage';
@@ -67,6 +69,8 @@ export function App() {
               <Route path="/purchases/new" element={<NewPurchasePage />} />
               <Route path="/purchases/:id" element={<PurchaseDetailPage />} />
               <Route path="/lots" element={<LotsPage />} />
+              <Route path="/fefo/highlight" element={<FefoHighlightPage />} />
+              <Route path="/fefo/rotation" element={<FefoRotationPage />} />
               <Route path="/stocks" element={<StocksPage />} />
               <Route path="/transfers" element={<TransfersPage />} />
               <Route path="/transfers/new" element={<NewTransferPage />} />
