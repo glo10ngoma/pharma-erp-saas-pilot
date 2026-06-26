@@ -161,8 +161,9 @@ export function PosPage() {
     window.print();
   }
 
-  const error = clientError || apiErrorMessage(createDraft.error || addItem.error || removeItem.error || applyInsurance.error || validate.error || cancel.error);
-  const showError = clientError || createDraft.isError || addItem.isError || removeItem.isError || applyInsurance.isError || validate.isError || cancel.isError;
+  const mutationError = createDraft.error || addItem.error || removeItem.error || applyInsurance.error || validate.error || cancel.error;
+  const showError = Boolean(clientError || mutationError);
+  const error = clientError || (mutationError ? apiErrorMessage(mutationError) : '');
 
   return (
     <div className="pos-page purchase-erp-window">
