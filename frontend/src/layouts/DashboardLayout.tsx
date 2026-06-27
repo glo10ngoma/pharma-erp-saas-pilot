@@ -14,7 +14,7 @@ export function DashboardLayout() {
       title: 'Pilotage',
       icon: 'TB',
       links: [
-        ['/dashboard', 'Dashboard', undefined],
+        [permissions.includes('reports.dashboard') ? '/reports/dashboard' : '/dashboard', permissions.includes('reports.dashboard') ? 'Dashboard BI' : 'Dashboard', undefined],
         ['/profile', 'Mon profil', undefined],
       ],
     },
@@ -89,7 +89,7 @@ export function DashboardLayout() {
       title: 'BI',
       icon: 'BI',
       links: [
-        ['/reports', 'Dashboard BI', 'reports.dashboard'],
+        ['/reports/dashboard', 'Dashboard BI', 'reports.dashboard'],
       ],
     },
     {
@@ -99,7 +99,7 @@ export function DashboardLayout() {
         ['/settings/exchange-rate', 'Taux de change', 'settings.exchange_rate.read'],
       ],
     },
-  ], []);
+  ], [permissions]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;

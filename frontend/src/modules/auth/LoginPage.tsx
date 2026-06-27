@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
+import { landingPathForUser } from '../../auth/landing';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -16,8 +17,8 @@ export function LoginPage() {
     setLoading(true);
 
     try {
-      await auth.login(email, password);
-      navigate('/dashboard');
+      const user = await auth.login(email, password);
+      navigate(landingPathForUser(user), { replace: true });
     } catch {
       setError('Identifiants invalides ou utilisateur inactif.');
     } finally {

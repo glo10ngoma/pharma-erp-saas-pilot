@@ -70,6 +70,17 @@ La page `/purchases/new` - Nouvel Achat - est desormais le modele UI/UX de refer
 - Afficher les donnees principales rapidement ; les calculs lourds et reconstructions historiques doivent etre declenches a la demande.
 - Les selecteurs article/lot partages doivent utiliser `FloatingSearchPopover` pour eviter les popovers coupes par les grilles.
 
+## Dashboards
+
+- Le Dashboard Admin est une page decisionnelle, pas une page d'accueil vide.
+- Les profils `ADMIN` et `MANAGER` arrivent directement sur le Dashboard BI lorsqu'ils possedent `reports.dashboard`.
+- Les profils de vente ou caisse arrivent directement sur le POS lorsque leur role et leurs permissions le permettent.
+- Un dashboard decisionnel combine toujours : KPIs, graphiques, alertes intelligentes et liens d'action vers les pages metier.
+- Les cartes KPI restent compactes, lisibles en light/dark et explicitent la devise de reporting.
+- Les graphiques doivent charger sans bloquer toute la page : afficher les donnees disponibles et signaler discretement les rapports indisponibles.
+- Les filtres principaux d'un dashboard sont : site, periode, date debut et date fin.
+- Les alertes du dashboard doivent orienter l'action : rupture, FEFO, lots expires, creances, caisse.
+
 ## Formulaires
 
 - Labels clairs pour chaque champ.

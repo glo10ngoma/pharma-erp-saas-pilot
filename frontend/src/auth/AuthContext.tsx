@@ -6,7 +6,7 @@ type AuthContextValue = {
   currentUser: AuthUser | null;
   permissions: string[];
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<AuthUser>;
   refreshUser: () => Promise<AuthUser | null>;
   logout: () => void;
 };
@@ -41,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const me = await authService.me();
       storeUser(me.data);
       setCurrentUser(me.data);
+      return me.data;
     } catch (error) {
       clearAuthStorage();
       setAccessToken(null);

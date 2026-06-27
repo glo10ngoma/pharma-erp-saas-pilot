@@ -1,6 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
+import { useAuth } from './auth/AuthContext';
+import { landingPathForUser } from './auth/landing';
 import { DashboardLayout } from './layouts/DashboardLayout';
 import { LoginPage } from './modules/auth/LoginPage';
 import { DashboardPage } from './modules/dashboard/DashboardPage';
@@ -57,7 +59,7 @@ export function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/pos/customer-display" element={<CustomerDisplayPage />} />
             <Route element={<DashboardLayout />}>
-              <Route path="/" element={<Navigate to="/dashboard" />} />
+              <Route path="/" element={<HomeRedirect />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/articles" element={<ArticlesPage />} />
@@ -93,7 +95,8 @@ export function App() {
               <Route path="/accounting/entries" element={<EntriesPage />} />
               <Route path="/accounting/general-ledger" element={<GeneralLedgerPage />} />
               <Route path="/accounting/trial-balance" element={<TrialBalancePage />} />
-              <Route path="/reports" element={<ReportsDashboardPage />} />
+              <Route path="/reports" element={<Navigate to="/reports/dashboard" replace />} />
+              <Route path="/reports/dashboard" element={<ReportsDashboardPage />} />
               <Route path="/settings/exchange-rate" element={<ExchangeRatePage />} />
               <Route path="/users" element={<UsersPage />} />
               <Route path="/roles" element={<RolesPage />} />
@@ -105,4 +108,9 @@ export function App() {
       </AuthProvider>
     </QueryClientProvider>
   );
+}
+
+function HomeRedirect() {
+  const { currentUser } = useAuth();
+  return <Navigate to={landingPathForUser(currentUser)} replace />;
 }
