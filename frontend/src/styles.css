@@ -2872,6 +2872,73 @@ details.nav-group .nav-link {
   max-width: 960px;
 }
 
+.reference-heading {
+  align-items: center;
+}
+
+.reference-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.reference-export-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reference-filters {
+  margin-bottom: 10px;
+  padding: 10px;
+}
+
+.reference-form label {
+  display: grid;
+  gap: 4px;
+}
+
+.reference-form label span {
+  color: var(--muted);
+  font-size: .72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.reference-table-wrap {
+  max-height: calc(100vh - 310px);
+  overflow: auto;
+}
+
+.reference-table {
+  min-width: 920px;
+}
+
+.reference-table th {
+  background: var(--surface-soft);
+  font-size: .72rem;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.reference-table th,
+.reference-table td {
+  padding: 7px 9px;
+  vertical-align: middle;
+}
+
+.reference-table tbody tr {
+  background: var(--surface);
+}
+
+.reference-table tbody tr:hover td {
+  background: var(--surface-soft);
+}
+
 .bi-hero {
   align-items: stretch;
   background: linear-gradient(135deg, var(--surface), var(--surface-soft));
@@ -3043,6 +3110,22 @@ details.nav-group .nav-link {
   background: #162033;
 }
 
+[data-theme='dark'] .reference-table th {
+  background: #0b1220;
+  border-bottom-color: #334155;
+  color: #d7e3ee;
+}
+
+[data-theme='dark'] .reference-table td {
+  background: #111827;
+  border-bottom-color: #273447;
+  color: var(--text);
+}
+
+[data-theme='dark'] .reference-table tbody tr:hover td {
+  background: #162033;
+}
+
 @media (max-width: 900px) {
   .page-heading {
     display: block;
@@ -3067,6 +3150,15 @@ details.nav-group .nav-link {
   .bi-chart-grid,
   .bi-alert-grid {
     grid-template-columns: 1fr;
+  }
+
+  .reference-heading {
+    display: block;
+  }
+
+  .reference-actions {
+    justify-content: flex-start;
+    margin-top: 10px;
   }
 
   .bi-hero-meta {
