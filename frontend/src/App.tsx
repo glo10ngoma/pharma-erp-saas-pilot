@@ -28,6 +28,7 @@ import { NewTransferPage } from './modules/transfers/NewTransferPage';
 import { TransfersPage } from './modules/transfers/TransfersPage';
 import { SalesPage } from './modules/sales/SalesPage';
 import { PosPage } from './modules/sales/PosPage';
+import { CustomerDisplayPage } from './modules/sales/CustomerDisplayPage';
 import { SaleDetailPage } from './modules/sales/SaleDetailPage';
 import { CashPage } from './modules/cash/CashPage';
 import { OrganizationsPage } from './modules/insurance/OrganizationsPage';
@@ -54,6 +55,7 @@ export function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/pos/customer-display" element={<CustomerDisplayPage />} />
             <Route element={<DashboardLayout />}>
               <Route path="/" element={<Navigate to="/dashboard" />} />
               <Route path="/dashboard" element={<DashboardPage />} />

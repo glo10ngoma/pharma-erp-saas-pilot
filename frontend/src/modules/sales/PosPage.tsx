@@ -1,6 +1,6 @@
 import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import { FloatingSearchPopover } from '../../components/FloatingSearchPopover';
 import { Article, articlesService } from '../../services/articles.service';
@@ -28,7 +28,6 @@ const initialForm = (): PosForm => ({ siteId: '', saleType: 'CASH', customerId: 
 const POS_USD_CDF_FALLBACK_RATE = 2800;
 
 export function PosPage() {
-  const navigate = useNavigate();
   const qc = useQueryClient();
   const { currentUser } = useAuth();
   const [form, setForm] = useState<PosForm>(initialForm);
@@ -42,14 +41,18 @@ export function PosPage() {
   const [exactPayment, setExactPayment] = useState(false);
   const [selectedLineId, setSelectedLineId] = useState('');
   const [clientError, setClientError] = useState('');
+  const [customerDisplayMessage, setCustomerDisplayMessage] = useState('');
   const [cashMode, setCashMode] = useState(() => localStorage.getItem('posCashMode') === 'true');
   const scanInputRef = useRef<HTMLInputElement | null>(null);
   const quantityInputRef = useRef<HTMLInputElement | null>(null);
   const paymentInputRef = useRef<HTMLInputElement | null>(null);
+  const customerSelectRef = useRef<HTMLSelectElement | null>(null);
+  const saleTypeSelectRef = useRef<HTMLSelectElement | null>(null);
+  const membershipSelectRef = useRef<HTMLSelectElement | null>(null);
   const audioRef = useRef<AudioContext | null>(null);
 
   const sites = useQuery({ queryKey: ['sites'], queryFn: async () => (await sitesService.getAll()).data });
-  const articles = useQuery({ queryKey: ['articles', 'pos'], queryFn: async () => (await articlesService.getAll({ limit: 100 })).data.items });
+  const articles = useQuery({ queryKey: ['articles', 'pos'], queryFn: async () => (await articlesService.getAll({ limit: 1000 })).data.items });
   const lots = useQuery({ queryKey: ['lots', 'pos'], queryFn: async () => (await lotsService.getAll()).data });
   const stocks = useQuery({ queryKey: ['stocks', 'pos'], queryFn: async () => (await stocksService.getAll()).data });
   const customers = useQuery({ queryKey: ['customers'], queryFn: async () => (await referenceService.customers.getAll()).data });
@@ -137,6 +140,7 @@ export function PosPage() {
   const patientPayableFc = patientPayable * saleExchangeRate;
   const changeDueFc = Math.max(0, paidEquivalentFc - patientPayableFc);
   const changeDueUsd = changeDueFc / saleExchangeRate;
+  const hasChangeDue = changeDueFc > 0;
   const quantityTotal = items.reduce((sum: number, item: any) => sum + Number(item.quantity ?? 0), 0);
 
   const createDraft = useMutation({
@@ -209,6 +213,10 @@ export function PosPage() {
   }, [currentUser?.siteId]);
 
   useEffect(() => {
+    setTimeout(() => focusArticleSearch(), 0);
+  }, []);
+
+  useEffect(() => {
     if (!form.siteId || sale || createDraft.isPending || createDraft.isSuccess) return;
     if (exchangeRateQuery.isLoading) return;
     if (form.saleType === 'INSURANCE' && !form.customerId) return;
@@ -226,9 +234,27 @@ export function PosPage() {
   }, [cashMode]);
 
   useEffect(() => {
+    localStorage.setItem('posCustomerDisplay', JSON.stringify({
+      items: items.map((item: any) => ({
+        name: item.commercialName ?? 'Article',
+        quantity: Number(item.quantity ?? 0),
+        totalFc: Number(item.lineTotal ?? 0) * saleExchangeRate,
+      })),
+      totalFc: patientPayableFc,
+      message: sale?.status === 'VALIDATED' ? 'Merci pour votre confiance.' : 'Merci pour votre patience.',
+    }));
+  }, [items, patientPayableFc, sale?.status, saleExchangeRate]);
+
+  useEffect(() => {
     const onKey = (event: globalThis.KeyboardEvent) => {
       if (event.key === 'F2') { event.preventDefault(); focusArticleSearch(); setArticlePopoverOpen(true); }
+      if (event.key === 'F3') { event.preventDefault(); applyExactPayment(); }
       if (event.key === 'F4') { event.preventDefault(); openQuantityForCurrentScan(); }
+      if (event.key === 'F5') { event.preventDefault(); customerSelectRef.current?.focus(); }
+      if (event.key === 'F6') { event.preventDefault(); (form.saleType === 'INSURANCE' ? membershipSelectRef.current : saleTypeSelectRef.current)?.focus(); }
+      if (event.key === 'F8') { event.preventDefault(); prepareNextSale(); }
+      if (event.key === 'F9') { event.preventDefault(); printDraft(); }
+      if (event.key === 'F10') { event.preventDefault(); quickCheckout(); }
       if (event.ctrlKey && event.key === 'Enter') { event.preventDefault(); quickCheckout(); }
       if (event.ctrlKey && event.key.toLowerCase() === 'l') { event.preventDefault(); focusArticleSearch(); setArticlePopoverOpen(true); }
       if (event.ctrlKey && event.key === 'Delete' && selectedLineId) { event.preventDefault(); removeItem.mutate(selectedLineId); }
@@ -250,6 +276,16 @@ export function PosPage() {
   }
   function focusPayment() {
     paymentInputRef.current?.focus();
+  }
+  function openCustomerDisplay() {
+    setCustomerDisplayMessage('');
+    const opened = window.open('/pos/customer-display', 'pos-customer-display', 'popup,width=900,height=700');
+    if (!opened) {
+      setCustomerDisplayMessage('Pop-up bloquee. Autorisez les pop-ups pour ouvrir l affichage client.');
+      playBeep('error');
+      return;
+    }
+    opened.focus();
   }
   function startSale(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -389,6 +425,9 @@ export function PosPage() {
           <p className="muted">Caisse rapide FEFO : scanner, quantite, encaisser.</p>
         </div>
         <div className="pos-cash-status">
+          <button className="ghost-button compact-button" type="button" onClick={openCustomerDisplay}>
+            Affichage client
+          </button>
           <button className="ghost-button compact-button" type="button" onClick={() => setCashMode((value) => !value)}>
             {cashMode ? 'Quitter mode caisse' : 'Mode caisse'}
           </button>
@@ -397,13 +436,22 @@ export function PosPage() {
         </div>
       </div>
       {showError && <p className="form-error">{error}</p>}
+      {customerDisplayMessage && <p className="form-error">{customerDisplayMessage}</p>}
       {exchangeRateQuery.isError && <p className="form-error">Taux USD/CDF non charge. Fallback demo utilise : 1 USD = {formatMoney(POS_USD_CDF_FALLBACK_RATE, 'CDF')}.</p>}
+
+      <section className="pos-status-strip">
+        <div><span>Caisse</span><strong>{currentCashSession.data ? 'OUVERTE' : 'FERMEE'}</strong><small>{currentCashSession.data?.registerName ?? 'Aucune session'}</small></div>
+        <div><span>Vendeur</span><strong>{currentUser?.fullName ?? '-'}</strong><small>{currentUser?.role ?? '-'}</small></div>
+        <div><span>Site</span><strong>{currentSite?.siteName ?? 'Site utilisateur'}</strong></div>
+        <div><span>Taux</span><strong>1 USD = {formatMoney(saleExchangeRate, 'CDF')}</strong></div>
+        <div><span>Type</span><strong>{form.saleType}</strong></div>
+      </section>
 
       <form className="card compact-card pos-header-grid" onSubmit={startSale}>
         <label><span>Vente no</span><input className="input compact-input" value={sale?.saleNumber ?? 'Auto'} disabled /></label>
-        <label><span>Client</span><select className="input compact-input" value={form.customerId} disabled={Boolean(sale)} onChange={(event) => update('customerId', event.target.value)} required={form.saleType === 'INSURANCE'}><option value="">Client comptoir</option>{(customers.data ?? []).map((customer) => <option key={customer.customerId} value={customer.customerId}>{customer.customerName}</option>)}</select></label>
-        <label><span>Type</span><select className="input compact-input" value={form.saleType} disabled={Boolean(sale)} onChange={(event) => update('saleType', event.target.value as PosForm['saleType'])}><option value="CASH">CASH</option><option value="INSURANCE">INSURANCE</option></select></label>
-        <label><span>Assurance</span><select className="input compact-input" value={form.membershipId} disabled={form.saleType !== 'INSURANCE' || !sale || sale.status !== 'DRAFT'} onChange={(event) => update('membershipId', event.target.value)}><option value="">Membership / Plan</option>{(memberships.data ?? []).filter((membership) => membership.isActive).map((membership) => <option key={membership.membershipId} value={membership.membershipId}>{membership.organizationName} - {membership.planName} ({membership.coveragePercent}%)</option>)}</select></label>
+        <label><span>Client</span><select ref={customerSelectRef} className="input compact-input" value={form.customerId} disabled={Boolean(sale)} onChange={(event) => update('customerId', event.target.value)} required={form.saleType === 'INSURANCE'}><option value="">Client comptoir</option>{(customers.data ?? []).map((customer) => <option key={customer.customerId} value={customer.customerId}>{customer.customerName}</option>)}</select></label>
+        <label><span>Type</span><select ref={saleTypeSelectRef} className="input compact-input" value={form.saleType} disabled={Boolean(sale)} onChange={(event) => update('saleType', event.target.value as PosForm['saleType'])}><option value="CASH">CASH</option><option value="INSURANCE">INSURANCE</option></select></label>
+        <label><span>Assurance</span><select ref={membershipSelectRef} className="input compact-input" value={form.membershipId} disabled={form.saleType !== 'INSURANCE' || !sale || sale.status !== 'DRAFT'} onChange={(event) => update('membershipId', event.target.value)}><option value="">Membership / Plan</option>{(memberships.data ?? []).filter((membership) => membership.isActive).map((membership) => <option key={membership.membershipId} value={membership.membershipId}>{membership.organizationName} - {membership.planName} ({membership.coveragePercent}%)</option>)}</select></label>
         <label><span>Site</span><input className="input compact-input" value={currentSite?.siteName ?? form.siteId ?? 'Site utilisateur'} disabled /></label>
         <label><span>Devise</span><input className="input compact-input" value="USD / FC" disabled /></label>
         <label><span>Taux</span><input className="input compact-input" value={`1 USD = ${formatMoney(saleExchangeRate, 'CDF')}`} disabled /></label>
@@ -461,6 +509,18 @@ export function PosPage() {
       <p className="muted pos-scan-help">Scanner un code-barres ou taper un nom/code/DCI. Entree sans texte passe au paiement.</p>
 
       <section className="card compact-card pos-summary-panel">
+        <div className="pos-cash-metrics">
+          <div className="pos-cash-total">
+            <span>Total client</span>
+            <strong>{formatMoney(patientPayableFc, 'CDF')}</strong>
+            <small>{formatMoney(patientPayable, 'USD', currencySymbol)}</small>
+          </div>
+          <div className={`pos-cash-change ${hasChangeDue ? 'positive' : ''}`}>
+            <span>RENDU</span>
+            <strong>{formatMoney(changeDueFc, 'CDF')}</strong>
+            <small>{formatMoney(changeDueUsd, 'USD', currencySymbol)}</small>
+          </div>
+        </div>
         <div className="pos-summary-grid">
           <Summary label="Articles" value={String(items.length)} />
           <Summary label="Qte totale" value={String(quantityTotal)} />
@@ -478,6 +538,7 @@ export function PosPage() {
           <button className="ghost-button compact-button pos-secondary-action pos-danger-action" type="button" disabled={!sale || sale.status !== 'DRAFT'} onClick={() => cancel.mutate()}>Annuler vente</button>
           <button className="ghost-button compact-button pos-secondary-action pos-print-action" type="button" disabled={!sale} onClick={printDraft}>Imprimer facture</button>
           <button className="ghost-button compact-button pos-secondary-action pos-exact-action" type="button" disabled={!sale || sale.status !== 'DRAFT' || items.length === 0} onClick={applyExactPayment}>Paiement exact</button>
+          <button className="ghost-button compact-button pos-secondary-action" type="button" onClick={prepareNextSale}>Nouvelle vente</button>
           <div className="pos-checkout-total">
             <span>Total a encaisser</span>
             <strong>{formatMoney(patientPayableFc, 'CDF')}</strong>

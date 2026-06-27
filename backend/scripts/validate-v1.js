@@ -148,12 +148,12 @@ async function closeCurrentIfAny() {
 
 async function saleCash() {
   await closeCurrentIfAny();
-  const session = await api('/cash/sessions/open', { method: 'POST', body: { siteId: context.site_id, openingBalance: 100 } });
+  await api('/cash/sessions/open', { method: 'POST', body: { siteId: context.site_id, openingBalance: 100 } });
   const sale = await api('/sales', { method: 'POST', body: { siteId: context.site_id, currencyId: context.currency_id, saleType: 'CASH' } });
   await api(`/sales/${sale.saleId}/items/fefo`, { method: 'POST', body: { articleId: context.article.articleId, quantity: 2 } });
   const validated = await api(`/sales/${sale.saleId}/validate`, { method: 'POST', body: { amountPaid: 10 } });
   const cashMovement = await client.query(`SELECT COUNT(*)::int AS total FROM cash_movements WHERE reference_id=$1 AND movement_type='SALE_PAYMENT'`, [sale.saleId]);
-  await api(`/cash/sessions/${session.cashSessionId}/close`, { method: 'POST', body: { countedClosingBalance: 110 } });
+  await closeCurrentIfAny();
   return validated.status === 'VALIDATED' && Number(cashMovement.rows[0].total) > 0;
 }
 
