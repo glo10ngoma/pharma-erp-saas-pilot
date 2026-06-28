@@ -1,38 +1,130 @@
-# Pharma ERP SaaS V2
+# Pharma ERP SaaS V1.0 RC1
 
-ERP pharmaceutique SaaS multi-tenant pour pharmacies, depots, cliniques et reseaux de pharmacies.
+ERP pharmaceutique SaaS multi-tenant pour pharmacies, depots, cliniques et reseaux de pharmacies en RDC / Afrique centrale.
+
+## Statut
+
+Version actuelle : **V1.0 RC1**.
+
+La release candidate couvre les workflows metier principaux :
+
+- Authentification JWT.
+- Administration utilisateurs, roles, permissions, sites, caisses.
+- Referentiel pharmaceutique.
+- Achats, lots, stocks, transferts et inventaires.
+- POS caisse rapide, barcode-ready, paiements USD/FC.
+- Caisse.
+- Assurances et creances.
+- Comptabilite simplifiee.
+- Dashboard BI, rapports, notifications et analyses.
 
 ## Stack
 
-- Backend: NestJS + TypeScript
-- Frontend: React + TypeScript + Vite
-- Database: PostgreSQL / Supabase
-- Auth: JWT
-- API: REST + Swagger
+- Backend : NestJS + TypeScript.
+- Frontend : React + TypeScript + Vite.
+- Database : PostgreSQL / Supabase.
+- Auth : JWT.
+- API : REST + Swagger.
+- Deploiement : Railway/Render backend, Vercel frontend, Supabase DB.
 
-## Prerequis
+## Modules disponibles
 
-- Node.js + npm
-- Une base PostgreSQL/Supabase initialisee avec `database/schema.sql`
-- Le seed DEV `database/seed_dev.sql`
+### Socle
+
+- Auth.
+- Users / Roles / Permissions.
+- Sites.
+- Parametres.
+- Taux de change USD/CDF.
+- Audit.
+
+### Referentiel
+
+- Articles.
+- Categories.
+- Sous-categories.
+- Formes galeniques.
+- Voies d'administration.
+- Types produits.
+- Fournisseurs.
+- Clients.
+
+### Approvisionnement / Stock
+
+- Achats multi-lignes.
+- Lots.
+- Stocks.
+- Stock a date.
+- Transferts inter-sites.
+- Inventaires physiques.
+- FEFO Intelligence.
+- Rotation des rayons.
+
+### Vente / Caisse
+
+- POS rapide.
+- Mode caisse.
+- Barcode-ready.
+- Paiement FC/USD/mixte.
+- Facture imprimable.
+- Affichage client.
+- Sessions caisse.
+- Depenses caisse.
+
+### Assurances / Creances
+
+- Organisations.
+- Plans assurance.
+- Memberships.
+- Ventes assurance.
+- Creances.
+- Paiements de creance.
+- Dashboard assurance.
+- Bordereaux V2 frontend.
+- Litiges V2 frontend.
+- Relances.
+
+### Finance
+
+- Plan comptable.
+- Journaux.
+- Ecritures.
+- Grand livre.
+- Balance.
+- Ecritures automatiques ventes, caisse, creances.
+
+### Pilotage
+
+- Dashboard BI.
+- Rapports imprimables.
+- Notifications.
+- Analyses avancees : ABC/Pareto, rotation, dormants, marges, fournisseurs, vendeurs.
+
+## Prerequis locaux
+
+- Node.js 20+.
+- npm.
+- PostgreSQL ou Supabase.
+- Schema applique depuis `database/schema.sql`.
+- Seed DEV ou STAGING applique.
 
 ## Initialiser la base DEV
-
-Executer le schema, puis le seed de developpement :
 
 ```bash
 psql "$DATABASE_URL" -f database/schema.sql
 psql "$DATABASE_URL" -f database/seed_dev.sql
 ```
 
-Le seed cree le tenant `DEMO`, le site `DEMO-SITE`, le role `ADMIN`, les permissions MVP, un registre caisse demo et l'utilisateur :
+Le seed DEV cree notamment :
 
 ```text
 Email: admin@demo.local
 Password: admin123
 ```
 
-## Backend
+Ne jamais commiter de mot de passe reel ni de secret.
+
+## Lancer le backend
 
 ```bash
 cd backend
@@ -41,18 +133,6 @@ copy .env.example .env
 npm run start:dev
 ```
 
-Configurer `backend/.env` avec vos valeurs locales :
-
-```text
-APP_PORT=3000
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
-DATABASE_SSL=true
-JWT_SECRET="change-me"
-JWT_EXPIRES_IN=1d
-```
-
-Ne jamais commiter de secrets reels dans le README, les seeds ou les fichiers exemples.
-
 API locale :
 
 ```text
@@ -60,18 +140,12 @@ http://localhost:3000/api/v1
 http://localhost:3000/docs
 ```
 
-En staging Railway/Render, le backend ecoute `PORT` si la plateforme le fournit. Le script de production est :
-
-```bash
-npm run build
-npm start
-```
-
-## Frontend
+## Lancer le frontend
 
 ```bash
 cd frontend
 npm install
+copy .env.example .env
 npm run dev -- --host 127.0.0.1
 ```
 
@@ -81,84 +155,94 @@ Application locale :
 http://127.0.0.1:5173
 ```
 
-Le frontend utilise `VITE_API_URL` si defini, sinon `http://localhost:3000/api/v1`.
-
-Pour Vercel, definir `VITE_API_URL` avec l'URL publique du backend, par exemple :
+`VITE_API_URL` pointe vers le backend :
 
 ```text
-https://votre-api-staging.up.railway.app/api/v1
+VITE_API_URL=http://localhost:3000/api/v1
 ```
 
-Guide complet staging : `docs/DEPLOYMENT_STAGING.md`.
+## Validation
 
-## Validation MVP et V1
-
-Demarrer le backend, puis lancer depuis `backend/` :
+Depuis `frontend/` :
 
 ```bash
-npm run validate:mvp -- auth
-npm run validate:mvp -- articles
-npm run validate:mvp -- purchase-stock
-npm run validate:mvp -- sale-fefo
-npm run validate:mvp -- cash-session
+npm run build
+```
+
+Depuis `backend/` :
+
+```bash
+npm run build
 npm run validate:mvp -- all
 npm run validate:v1
+npm run validate:rc1
 ```
 
-`validate:mvp` valide le noyau historique : login, articles, entree achat vers stock, vente FEFO et session caisse.
+`validate:mvp` couvre le noyau historique :
 
-`validate:v1` valide les blocs V1 de pre-production :
+- auth.
+- articles.
+- achat vers stock.
+- vente FEFO.
+- session caisse.
 
-- Auth
-- Users / Roles / Sites
-- Referentiel pharmaceutique
-- Achat vers stock
-- Vente + caisse
-- Assurance + creance
-- Inventaire
-- Comptabilite
-- Reporting BI
+`validate:v1` couvre :
 
-## Checklist demo V1 locale
+- users/roles/sites.
+- referentiel.
+- achat-stock.
+- vente-caisse.
+- assurance-creance.
+- inventaire.
+- comptabilite.
+- reporting.
 
-- `backend/.env` configure sans secrets commites
-- `database/schema.sql` applique
-- `database/seed_dev.sql` applique
-- Login admin demo OK
-- `/auth/me` protege par JWT
-- Permissions chargees dans le JWT
-- `tenant_id` filtre les donnees metier
-- `site_id` limite les utilisateurs rattaches a un site
-- Achats valides creent lots, stocks, `PURCHASE_IN` et audit
-- Ventes CASH valides sortent FEFO, creent `SALE_OUT`, paiement et audit
-- Caisse ouvre/ferme une session et cree les mouvements cash
-- Assurance cree la part patient, la creance assurance et permet le paiement de creance
-- Inventaire valide cree `INVENTORY_GAIN` ou `INVENTORY_LOSS`
-- Comptabilite cree des ecritures automatiques equilibrees
-- Reporting BI affiche KPI, ventes, stock, marges, caisse, creances et peremptions
-- `npm run build` backend OK
-- `npm run build` frontend OK
-- `npm run validate:mvp -- all` OK
-- `npm run validate:v1` OK
+`validate:rc1` orchestre :
 
-## Routes V1 actives
+- `validate:mvp -- all`.
+- `validate:v1`.
+- audit de routes critiques frontend.
 
-- Auth: `/auth/login`, `/auth/me`
-- Administration: `/users`, `/roles`, `/permissions`, `/sites`
-- Referentiel: `/articles`, `/categories`, `/sub-categories`, `/galenic-forms`, `/administration-routes`, `/product-types`, `/suppliers`, `/customers`
-- Achats / stock: `/purchases`, `/lots`, `/stocks`, `/stock-movements`
-- Vente / caisse: `/sales`, `/payments`, `/cash`
-- Assurances / creances: `/organizations`, `/insurance-plans`, `/memberships`, `/receivables`
-- Inventaires: `/inventories`
-- Comptabilite: `/accounting/accounts`, `/accounting/journals`, `/accounting/entries`, `/accounting/trial-balance`, `/accounting/general-ledger`
-- Reporting BI: `/reports/dashboard`, `/reports/sales`, `/reports/stock`, `/reports/margins`, `/reports/cash`, `/reports/receivables`, `/reports/expiry`, `/reports/top-products`
+## Documentation
 
-Swagger local :
+Guides utilisateurs et techniques :
 
-```text
-http://localhost:3000/docs
-```
+- [Manuel administrateur](docs/manuals/ADMIN_MANUAL.md)
+- [Manuel pharmacien / responsable](docs/manuals/PHARMACIST_MANUAL.md)
+- [Manuel caissier](docs/manuals/CASHIER_MANUAL.md)
+- [Manuel magasinier](docs/manuals/STOCK_MANAGER_MANUAL.md)
+- [Manuel comptable](docs/manuals/ACCOUNTANT_MANUAL.md)
+- [Manuel assurances & creances](docs/manuals/INSURANCE_MANUAL.md)
+- [Manuel rapports / BI / analyses](docs/manuals/REPORTS_AND_ANALYTICS_MANUAL.md)
+- [Guide installation / deploiement](docs/manuals/INSTALLATION_DEPLOYMENT_GUIDE.md)
+- [Guide developpeur](docs/manuals/DEVELOPER_GUIDE.md)
+- [Vue d'ensemble API](docs/manuals/API_OVERVIEW.md)
 
-## Modules hors V1
+Documentation complementaire :
 
-Transferts, prescriptions, notifications, pieces jointes et modules connexes restent non importes dans `AppModule` tant qu'ils ne sont pas inclus dans un sprint valide.
+- [UI/UX Guidelines](docs/UI_UX_GUIDELINES.md)
+- [Deploiement staging](docs/DEPLOYMENT_STAGING.md)
+- [Plan de test RC1](docs/tests/RC1_TEST_PLAN.md)
+- [Scenarios RC1](docs/tests/RC1_TEST_SCENARIOS.md)
+- [Resultats RC1](docs/tests/RC1_TEST_RESULTS.md)
+- [Checklist regression RC1](docs/tests/RC1_REGRESSION_CHECKLIST.md)
+
+## Limites connues V1.0 RC1
+
+- Bordereaux et litiges assurance V2 sont stockes en `localStorage` cote frontend tant que le schema dedie n'existe pas.
+- Exports PDF desactives.
+- Certaines analyses avancees sont estimatives selon les donnees disponibles.
+- Stock a date limite par l'historique `stock_movements`.
+- Comptabilite en devise de base USD ; FC utilise pour affichage/encaissement POS avec conversion.
+- Taux USD/CDF configurable par tenant.
+
+## Regles critiques
+
+- `tenant_id` vient toujours du JWT.
+- `site_id` est controle cote backend.
+- Ne jamais modifier le stock sans `stock_movements`.
+- Les ventes sortent le stock en FEFO.
+- Les lots expires ou bloques ne sont pas vendables.
+- Les validations achat/vente/inventaire sont transactionnelles.
+- Les actions sensibles creent des `audit_logs`.
+- Aucun secret ne doit etre commite.
