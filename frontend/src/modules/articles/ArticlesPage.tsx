@@ -31,7 +31,7 @@ export function ArticlesPage() {
   const [defaultStockMin, setDefaultStockMin] = useState('0');
   const [defaultStockMax, setDefaultStockMax] = useState('');
 
-  const articles = useQuery({ queryKey: ['articles', search], queryFn: async () => (await articlesService.getAll({ search: search || undefined, limit: 1000 })).data });
+  const articles = useQuery({ queryKey: ['articles', search], queryFn: async () => fetchArticlesForList(search) });
   const categories = useQuery({ queryKey: ['categories'], queryFn: async () => (await referenceService.categories.getAll()).data });
   const subCategories = useQuery({ queryKey: ['sub-categories'], queryFn: async () => (await referenceService.subCategories.getAll()).data });
   const forms = useQuery({ queryKey: ['galenic-forms'], queryFn: async () => (await referenceService.galenicForms.getAll()).data });
@@ -182,6 +182,27 @@ export function ArticlesPage() {
       )}
     </>
   );
+}
+
+async function fetchArticlesForList(search: string) {
+  const params = { search: search || undefined, limit: 100, page: 1 };
+  const firstPage = (await articlesService.getAll(params)).data;
+  const pageCount = Math.ceil(firstPage.total / firstPage.limit);
+  if (pageCount <= 1) return firstPage;
+
+  const remainingPages = await Promise.all(
+    Array.from({ length: pageCount - 1 }, (_, index) =>
+      articlesService.getAll({ ...params, page: index + 2 }),
+    ),
+  );
+
+  return {
+    ...firstPage,
+    items: [
+      ...firstPage.items,
+      ...remainingPages.flatMap((page) => page.data.items),
+    ],
+  };
 }
 
 function ArticleDetailModal({
