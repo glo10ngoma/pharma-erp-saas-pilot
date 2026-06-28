@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { canReadNotifications, readNotificationState, useGeneratedNotifications } from '../modules/notifications/notifications-data';
 
 type NavLinkItem = [to: string, label: string, permission?: string];
 type NavGroup = { title: string; icon: string; links: NavLinkItem[] };
@@ -9,12 +10,17 @@ export function DashboardLayout() {
   const navigate = useNavigate();
   const { accessToken, currentUser, permissions, loading, logout: clearAuth } = useAuth();
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+  const [notificationState, setNotificationState] = useState(() => readNotificationState());
+  const canSeeNotifications = canReadNotifications(permissions, currentUser?.role);
+  const { notifications } = useGeneratedNotifications(notificationState, canSeeNotifications);
+  const unreadCount = notifications.filter((notification) => notification.status === 'UNREAD').length;
   const groups = useMemo<NavGroup[]>(() => [
     {
       title: 'Pilotage',
       icon: 'TB',
       links: [
         [permissions.includes('reports.dashboard') ? '/reports/dashboard' : '/dashboard', permissions.includes('reports.dashboard') ? 'Dashboard BI' : 'Dashboard', undefined],
+        ['/notifications', 'Notifications', undefined],
         ['/profile', 'Mon profil', undefined],
       ],
     },
@@ -121,6 +127,18 @@ export function DashboardLayout() {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
+  useEffect(() => {
+    function refreshNotificationState() {
+      setNotificationState(readNotificationState());
+    }
+    window.addEventListener('storage', refreshNotificationState);
+    window.addEventListener('notifications-updated', refreshNotificationState);
+    return () => {
+      window.removeEventListener('storage', refreshNotificationState);
+      window.removeEventListener('notifications-updated', refreshNotificationState);
+    };
+  }, []);
+
   if (loading) return <main className="content"><p className="loading-state">Chargement du profil...</p></main>;
   if (!accessToken) return <Navigate to="/login" replace />;
   if (!currentUser) return <Navigate to="/login" replace />;
@@ -142,7 +160,10 @@ export function DashboardLayout() {
         </button>
         <nav>
           {groups.map((group) => {
-            const visibleLinks = group.links.filter(([, , permission]) => !permission || permissions.includes(permission));
+            const visibleLinks = group.links.filter(([to, , permission]) => {
+              if (to === '/notifications') return canSeeNotifications;
+              return !permission || permissions.includes(permission);
+            });
             if (visibleLinks.length === 0) return null;
             return (
               <details className="nav-group" key={group.title} open>
@@ -161,6 +182,15 @@ export function DashboardLayout() {
         </button>
       </aside>
       <main className="content">
+        <div className="app-topbar">
+          <Link className="notification-bell" to="/notifications" aria-label="Notifications">
+            <svg aria-hidden="true" className="notification-bell-icon" viewBox="0 0 24 24">
+              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+              <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+            </svg>
+            {unreadCount > 0 && <strong>{unreadCount}</strong>}
+          </Link>
+        </div>
         <Outlet />
       </main>
     </div>

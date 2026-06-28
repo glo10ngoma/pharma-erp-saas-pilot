@@ -44,6 +44,7 @@ import { JournalsPage } from './modules/accounting/JournalsPage';
 import { EntriesPage } from './modules/accounting/EntriesPage';
 import { GeneralLedgerPage } from './modules/accounting/GeneralLedgerPage';
 import { TrialBalancePage } from './modules/accounting/TrialBalancePage';
+import { NotificationsPage } from './modules/notifications/NotificationsPage';
 import { ReportsDashboardPage } from './modules/reports/ReportsDashboardPage';
 import { ReportsIndexPage } from './modules/reports/ReportsIndexPage';
 import {
@@ -112,6 +113,7 @@ export function App() {
               <Route path="/accounting/entries" element={<EntriesPage />} />
               <Route path="/accounting/general-ledger" element={<GeneralLedgerPage />} />
               <Route path="/accounting/trial-balance" element={<TrialBalancePage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/reports" element={<ReportsIndexPage />} />
               <Route path="/reports/dashboard" element={<ReportsDashboardPage />} />
               <Route path="/reports/sales-report" element={<SalesReportPage />} />

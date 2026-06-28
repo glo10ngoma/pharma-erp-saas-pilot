@@ -92,6 +92,15 @@ La page `/purchases/new` - Nouvel Achat - est desormais le modele UI/UX de refer
 - Les exports respectent toujours les filtres actifs.
 - Les rapports prioritaires V1.1 sont : Ventes, Achats, Stocks, Inventaires, FEFO, Caisse, Assurances et Marges.
 
+## Notifications
+
+- Le centre `/notifications` est un assistant quotidien de gestion, pas une simple liste de messages.
+- Les notifications V1.1 sont generees au chargement depuis les donnees existantes : stocks, lots FEFO, inventaires, creances, caisse et KPIs rapports.
+- Les priorites sont visuelles et stables : rouge critique, orange avertissement, bleu information.
+- Chaque notification doit proposer une action utile vers le module concerne : Stocks, FEFO, Caisse, Inventaires ou Assurances.
+- Le badge du header affiche les notifications non lues et ne doit pas masquer la navigation principale.
+- Les notifications restent exportables en Excel, CSV et JSON ; le PDF reste desactive tant que non pret.
+
 ## Formulaires
 
 - Labels clairs pour chaque champ.

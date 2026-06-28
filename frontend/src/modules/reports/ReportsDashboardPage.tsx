@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import {
   Bar,
   BarChart,
@@ -27,6 +28,7 @@ import { stocksService } from '../../services/stocks.service';
 import { formatDate } from '../../utils/date';
 import { formatMoney } from '../../utils/money';
 import { buildFefoKpis, buildFefoRiskRows, buildRotationKpis, buildRotationRows } from '../fefo/fefo-utils';
+import { canReadNotifications, readNotificationState, useGeneratedNotifications } from '../notifications/notifications-data';
 
 const chartColors = ['#0f766e', '#2563eb', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981'];
 const moneyKeys = new Set(['totalAmount', 'patientAmount', 'insuranceAmount', 'purchaseValue', 'saleValue', 'revenue', 'estimatedCost', 'grossMargin', 'amountDue', 'amountPaid', 'balance', 'amount', 'stockValue']);
@@ -40,6 +42,8 @@ export function ReportsDashboardPage() {
   const [filters, setFilters] = useState<ReportFilters>(() => periodFilters('30d', today));
   const queryKey = ['reports', filters];
   const canSeeReports = permissions.includes('reports.dashboard');
+  const canSeeNotifications = canReadNotifications(permissions, currentUser?.role);
+  const { notifications } = useGeneratedNotifications(readNotificationState(), canSeeReports && canSeeNotifications);
 
   const dashboard = useQuery({ queryKey: [...queryKey, 'dashboard'], queryFn: async () => (await reportsService.dashboard(filters)).data, enabled: canSeeReports });
   const sales = useQuery({ queryKey: [...queryKey, 'sales'], queryFn: async () => (await reportsService.sales(filters)).data, enabled: canSeeReports });
@@ -78,6 +82,10 @@ export function ReportsDashboardPage() {
   const receivableData = useMemo(() => buildReceivableStatus(receivables.data ?? [], kpis?.openReceivables ?? 0), [kpis?.openReceivables, receivables.data]);
   const stockCategoryData = useMemo(() => buildStockCategoryData(stock.data ?? []), [stock.data]);
   const alerts = useMemo(() => buildAlerts(kpis, fefo.rows, receivables.data ?? [], cash.data ?? []), [cash.data, fefo.rows, kpis, receivables.data]);
+  const notificationSummary = useMemo(() => ({
+    critical: notifications.filter((notification) => notification.priority === 'CRITICAL').length,
+    warnings: notifications.filter((notification) => notification.priority === 'WARNING').length,
+  }), [notifications]);
 
   function applyPeriod(next: PeriodPreset) {
     setPeriod(next);
@@ -131,6 +139,13 @@ export function ReportsDashboardPage() {
             <Kpi title="Caisse du jour" value={formatMoney(kpis?.totalCashPayments ?? 0, 'USD')} />
             <Kpi title="Lots proches expiration" value={String(kpis?.expiring30DaysCount ?? fefo.kpis.expiring30)} tone={(kpis?.expiring30DaysCount ?? 0) > 0 ? 'warning' : 'success'} />
             <Kpi title="FEFO Sante" value={`${fefo.health} %`} tone={fefo.health < 80 ? 'danger' : fefo.health < 95 ? 'warning' : 'success'} />
+            {canSeeNotifications && (
+              <Link className="card kpi-card bi-kpi bi-notification-card" to="/notifications">
+                <span className="kpi-label">Notifications</span>
+                <p className="metric small-metric">{notificationSummary.critical} critiques</p>
+                <small>{notificationSummary.warnings} avertissements</small>
+              </Link>
+            )}
           </>
         )}
       </section>
