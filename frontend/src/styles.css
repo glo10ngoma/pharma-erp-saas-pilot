@@ -2891,6 +2891,18 @@ details.nav-group .nav-link {
   gap: 8px;
 }
 
+.reference-summary-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  margin-bottom: 10px;
+}
+
+.reference-summary-card {
+  min-height: 72px;
+  padding: 10px 12px;
+}
+
 .reference-filters {
   margin-bottom: 10px;
   padding: 10px;
@@ -2937,6 +2949,18 @@ details.nav-group .nav-link {
 
 .reference-table tbody tr:hover td {
   background: var(--surface-soft);
+}
+
+.articles-table {
+  min-width: 1180px;
+}
+
+.articles-table-wrap {
+  max-height: calc(100vh - 360px);
+}
+
+.article-detail-modal {
+  max-width: 1040px;
 }
 
 .bi-hero {
@@ -3144,6 +3168,7 @@ details.nav-group .nav-link {
   .finance-create-form,
   .finance-filters,
   .finance-filters-wide,
+  .reference-summary-grid,
   .bi-hero,
   .bi-filters,
   .bi-kpi-grid,

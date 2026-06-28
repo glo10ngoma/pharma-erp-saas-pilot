@@ -7,7 +7,7 @@ import { filterRows } from '../../lib/search';
 import { apiErrorMessage } from '../../services/apiError';
 import { codeGeneratorService } from '../../services/codeGenerator.service';
 import { insuranceService } from '../../services/insurance.service';
-import { ActiveBadge, ReferenceExportActions, ReferenceHeader } from '../reference/reference-ui';
+import { ActiveBadge, ReferenceExportActions, ReferenceHeader, ReferenceSummary, summarizeActive } from '../reference/reference-ui';
 
 export function OrganizationsPage() {
   const qc = useQueryClient();
@@ -26,6 +26,7 @@ export function OrganizationsPage() {
   function openModal() { setCode(nextCode.data ?? ''); setModalOpen(true); }
   function submit(e: FormEvent<HTMLFormElement>) { e.preventDefault(); create.mutate({ organizationCode, organizationName, organizationType, phone: phone || undefined, email: email || undefined }); }
   const rows = filterRows(query.data ?? [], search, (row) => [row.organizationCode, row.organizationName, row.organizationType, row.phone, row.email]);
+  const summary = summarizeActive(query.data ?? []);
   const exportRows = useMemo(() => [['Code', 'Nom', 'Type', 'Telephone', 'Email', 'Statut'], ...rows.map((row) => [row.organizationCode, row.organizationName, row.organizationType, row.phone ?? '-', row.email ?? '-', row.isActive ? 'Actif' : 'Inactif'])], [rows]);
   return (
     <>
@@ -33,6 +34,7 @@ export function OrganizationsPage() {
         <div className="reference-actions"><ReferenceExportActions baseName="organisations" sheetName="Organisations" rows={exportRows} jsonData={rows} disabled={rows.length === 0} />{can('organizations.create') && <button className="button compact-button" onClick={openModal}>Nouvelle organisation</button>}</div>
       </ReferenceHeader>
       {(create.isError || disable.isError) && <p className="form-error">{apiErrorMessage(create.error || disable.error)}</p>}
+      <ReferenceSummary total={(query.data ?? []).length} filtered={rows.length} active={summary.active} inactive={summary.inactive} />
       <Modal title="Nouvelle organisation" open={modalOpen} onClose={() => setModalOpen(false)}>
         <form className="form-grid reference-form" onSubmit={submit}>
           <label><span>Code</span><input className="input compact-input" placeholder={nextCode.data ?? 'Code'} value={organizationCode || nextCode.data || ''} onChange={(e) => setCode(e.target.value)} required /></label>

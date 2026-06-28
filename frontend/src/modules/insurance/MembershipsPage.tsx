@@ -8,7 +8,7 @@ import { apiErrorMessage } from '../../services/apiError';
 import { codeGeneratorService } from '../../services/codeGenerator.service';
 import { insuranceService } from '../../services/insurance.service';
 import { referenceService } from '../../services/reference.service';
-import { ActiveBadge, ReferenceExportActions, ReferenceHeader } from '../reference/reference-ui';
+import { ActiveBadge, ReferenceExportActions, ReferenceHeader, ReferenceSummary, summarizeActive } from '../reference/reference-ui';
 
 export function MembershipsPage() {
   const qc = useQueryClient();
@@ -29,6 +29,7 @@ export function MembershipsPage() {
   function submit(e: FormEvent<HTMLFormElement>) { e.preventDefault(); create.mutate({ customerId, organizationId, planId, memberNumber: memberNumber || undefined }); }
   const availablePlans = (plans.data ?? []).filter((plan) => !organizationId || plan.organizationId === organizationId);
   const rows = filterRows(memberships.data ?? [], search, (row) => [row.customerName, row.organizationName, row.planName, row.memberNumber, row.coveragePercent]);
+  const summary = summarizeActive(memberships.data ?? []);
   const exportRows = useMemo(() => [['Client', 'Assurance', 'Plan', 'Numero carte', 'Couverture %', 'Statut'], ...rows.map((row) => [row.customerName ?? '-', row.organizationName ?? '-', row.planName ?? '-', row.memberNumber ?? '-', row.coveragePercent ?? 0, row.isActive ? 'Actif' : 'Inactif'])], [rows]);
   return (
     <>
@@ -36,6 +37,7 @@ export function MembershipsPage() {
         <div className="reference-actions"><ReferenceExportActions baseName="memberships" sheetName="Memberships" rows={exportRows} jsonData={rows} disabled={rows.length === 0} />{can('memberships.create') && <button className="button compact-button" onClick={openModal}>Nouveau membership</button>}</div>
       </ReferenceHeader>
       {create.isError && <p className="form-error">{apiErrorMessage(create.error)}</p>}
+      <ReferenceSummary total={(memberships.data ?? []).length} filtered={rows.length} active={summary.active} inactive={summary.inactive} />
       <Modal title="Nouveau membership" open={modalOpen} onClose={() => setModalOpen(false)}>
         <form className="form-grid reference-form" onSubmit={submit}>
           <label><span>Client</span><select className="input compact-input" value={customerId} onChange={(e) => setCustomerId(e.target.value)} required><option value="">Client</option>{(customers.data ?? []).map((customer) => <option key={customer.customerId} value={customer.customerId}>{customer.customerName}</option>)}</select></label>

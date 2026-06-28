@@ -7,7 +7,7 @@ import { filterRows } from '../../lib/search';
 import { apiErrorMessage } from '../../services/apiError';
 import { codeGeneratorService } from '../../services/codeGenerator.service';
 import { referenceService } from '../../services/reference.service';
-import { ActiveBadge, ReferenceExportActions, ReferenceHeader } from './reference-ui';
+import { ActiveBadge, ReferenceExportActions, ReferenceHeader, ReferenceSummary, summarizeActive } from './reference-ui';
 
 export function SubCategoriesPage() {
   const qc = useQueryClient();
@@ -24,6 +24,7 @@ export function SubCategoriesPage() {
   function openModal() { setCode(nextCode.data ?? ''); setModalOpen(true); }
   function submit(e: FormEvent<HTMLFormElement>) { e.preventDefault(); create.mutate({ categoryId, subCategoryCode, subCategoryName }); }
   const rows = filterRows(query.data ?? [], search, (row) => [row.subCategoryCode, row.subCategoryName, row.categoryName]);
+  const summary = summarizeActive(query.data ?? []);
   const exportRows = useMemo(() => [['Code', 'Nom', 'Parent', 'Statut'], ...rows.map((row) => [row.subCategoryCode, row.subCategoryName, row.categoryName ?? '-', row.isActive ? 'Actif' : 'Inactif'])], [rows]);
   return (
     <>
@@ -31,6 +32,7 @@ export function SubCategoriesPage() {
         <div className="reference-actions"><ReferenceExportActions baseName="sous_categories" sheetName="Sous categories" rows={exportRows} jsonData={rows} disabled={rows.length === 0} />{can('sub_categories.create') && <button className="button compact-button" onClick={openModal}>Nouvelle sous-categorie</button>}</div>
       </ReferenceHeader>
       {create.isError && <p className="form-error">{apiErrorMessage(create.error)}</p>}
+      <ReferenceSummary total={(query.data ?? []).length} filtered={rows.length} active={summary.active} inactive={summary.inactive} />
       <Modal title="Nouvelle sous-categorie" open={modalOpen} onClose={() => setModalOpen(false)}>
         <form className="form-grid reference-form" onSubmit={submit}>
           <label><span>Parent</span><select className="input compact-input" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required><option value="">Categorie</option>{(categories.data ?? []).map((category) => <option key={category.categoryId} value={category.categoryId}>{category.categoryName}</option>)}</select></label>

@@ -6,7 +6,7 @@ import { usePermission } from '../../hooks/usePermission';
 import { filterRows } from '../../lib/search';
 import { apiErrorMessage } from '../../services/apiError';
 import { codeGeneratorService } from '../../services/codeGenerator.service';
-import { ActiveBadge, ReferenceExportActions, ReferenceHeader } from './reference-ui';
+import { ActiveBadge, ReferenceExportActions, ReferenceHeader, ReferenceSummary, summarizeActive } from './reference-ui';
 
 type Props<T extends Record<string, unknown>> = {
   title: string;
@@ -36,6 +36,7 @@ export function SimpleCodeNamePage<T extends Record<string, unknown>>(props: Pro
   function openModal() { setCode(nextCode.data ?? ''); setModalOpen(true); }
   function submit(e: FormEvent<HTMLFormElement>) { e.preventDefault(); create.mutate({ [props.codeField]: code, [props.nameField]: name }); }
   const rows = filterRows(query.data ?? [], search, (row) => [row[props.codeField], row[props.nameField]]);
+  const summary = summarizeActive(query.data ?? []);
   const exportRows = useMemo(() => [
     ['Code', 'Nom', 'Statut'],
     ...rows.map((row) => [String(row[props.codeField] ?? ''), String(row[props.nameField] ?? ''), typeof row.isActive === 'boolean' ? (row.isActive ? 'Actif' : 'Inactif') : 'Actif']),
@@ -49,6 +50,7 @@ export function SimpleCodeNamePage<T extends Record<string, unknown>>(props: Pro
         </div>
       </ReferenceHeader>
       {create.isError && <p className="form-error">{apiErrorMessage(create.error)}</p>}
+      <ReferenceSummary total={(query.data ?? []).length} filtered={rows.length} active={summary.active} inactive={summary.inactive} />
       <Modal title={`Nouveau - ${props.title}`} open={modalOpen} onClose={() => setModalOpen(false)}>
         <form className="form-grid reference-form" onSubmit={submit}>
           <label><span>{props.codeLabel}</span><input className="input compact-input" placeholder={nextCode.data ?? props.codeLabel} value={code || nextCode.data || ''} onChange={(e) => setCode(e.target.value)} required /></label>

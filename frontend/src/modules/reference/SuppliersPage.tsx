@@ -7,7 +7,7 @@ import { filterRows } from '../../lib/search';
 import { apiErrorMessage } from '../../services/apiError';
 import { codeGeneratorService } from '../../services/codeGenerator.service';
 import { referenceService } from '../../services/reference.service';
-import { ActiveBadge, ReferenceExportActions, ReferenceHeader } from './reference-ui';
+import { ActiveBadge, ReferenceExportActions, ReferenceHeader, ReferenceSummary, summarizeActive } from './reference-ui';
 
 export function SuppliersPage() {
   const qc = useQueryClient();
@@ -25,6 +25,7 @@ export function SuppliersPage() {
   function openModal() { setCode(nextCode.data ?? ''); setModalOpen(true); }
   function submit(e: FormEvent<HTMLFormElement>) { e.preventDefault(); create.mutate({ supplierCode, supplierName, phone: phone || undefined, email: email || undefined, address: address || undefined }); }
   const rows = filterRows(query.data ?? [], search, (row) => [row.supplierCode, row.supplierName, row.phone, row.email, row.address]);
+  const summary = summarizeActive(query.data ?? []);
   const exportRows = useMemo(() => [['Code', 'Nom', 'Telephone', 'Email', 'Adresse', 'Statut'], ...rows.map((row) => [row.supplierCode, row.supplierName, row.phone ?? '-', row.email ?? '-', row.address ?? '-', row.isActive ? 'Actif' : 'Inactif'])], [rows]);
   return (
     <>
@@ -32,6 +33,7 @@ export function SuppliersPage() {
         <div className="reference-actions"><ReferenceExportActions baseName="fournisseurs" sheetName="Fournisseurs" rows={exportRows} jsonData={rows} disabled={rows.length === 0} />{can('suppliers.create') && <button className="button compact-button" onClick={openModal}>Nouveau fournisseur</button>}</div>
       </ReferenceHeader>
       {create.isError && <p className="form-error">{apiErrorMessage(create.error)}</p>}
+      <ReferenceSummary total={(query.data ?? []).length} filtered={rows.length} active={summary.active} inactive={summary.inactive} />
       <Modal title="Nouveau fournisseur" open={modalOpen} onClose={() => setModalOpen(false)}>
         <form className="form-grid reference-form" onSubmit={submit}>
           <label><span>Code</span><input className="input compact-input" placeholder={nextCode.data ?? 'Code'} value={supplierCode || nextCode.data || ''} onChange={(e) => setCode(e.target.value)} required /></label>

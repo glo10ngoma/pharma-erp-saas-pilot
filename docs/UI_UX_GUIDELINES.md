@@ -92,6 +92,17 @@ La page `/purchases/new` - Nouvel Achat - est desormais le modele UI/UX de refer
 - Pages dediees pour les flux complexes ou longs.
 - Les pages dediees doivent reduire les hauteurs inutiles : labels courts, inputs compacts, boutons compacts et espacement vertical minimal.
 
+## Pages Referentiel
+
+- Toute page Referentiel doit proposer une recherche visible au-dessus de la liste.
+- Toute page Referentiel doit permettre l'export Excel, CSV et JSON des donnees filtrees ; le PDF reste desactive tant qu'il n'est pas pret.
+- Les listes Referentiel utilisent des tableaux compacts avec en-tetes sticky, badges actif/inactif et actions visibles en light/dark.
+- Les pages Referentiel affichent des cartes resume : total, actifs, inactifs et elements filtres.
+- La creation simple se fait en modal compacte avec labels courts, placeholders utiles et boutons Annuler / Enregistrer.
+- Les codes generes automatiquement restent modifiables par l'utilisateur.
+- Une action Voir ouvre un detail modal lorsque l'information aide vraiment l'utilisateur.
+- Les libelles affiches sont des libelles metier propres ; ne pas prefixer les categories, formes, voies ou types par "Demo" dans l'application.
+
 ## Raccourcis clavier
 
 - `Ctrl+Entree` : enregistrer.

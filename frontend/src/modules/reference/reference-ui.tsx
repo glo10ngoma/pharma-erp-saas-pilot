@@ -44,6 +44,32 @@ export function ReferenceHeader({ title, children }: { title: string; children?:
   );
 }
 
+export function ReferenceSummary({
+  active,
+  filtered,
+  inactive,
+  total,
+}: {
+  active?: number;
+  filtered?: number;
+  inactive?: number;
+  total: number;
+}) {
+  return (
+    <div className="reference-summary-grid">
+      <div className="card kpi-card reference-summary-card"><span className="kpi-label">Total</span><p className="metric small-metric">{total}</p></div>
+      <div className="card kpi-card reference-summary-card"><span className="kpi-label">Actifs</span><p className="metric small-metric">{active ?? total}</p></div>
+      <div className="card kpi-card reference-summary-card"><span className="kpi-label">Inactifs</span><p className="metric small-metric">{inactive ?? 0}</p></div>
+      <div className="card kpi-card reference-summary-card"><span className="kpi-label">Filtres</span><p className="metric small-metric">{filtered ?? total}</p></div>
+    </div>
+  );
+}
+
+export function summarizeActive<T extends { isActive?: boolean }>(rows: T[]) {
+  const active = rows.filter((row) => row.isActive !== false).length;
+  return { active, inactive: rows.length - active };
+}
+
 export function refText(value: unknown) {
   return String(value ?? '').toLowerCase();
 }

@@ -7,7 +7,7 @@ import { filterRows } from '../../lib/search';
 import { apiErrorMessage } from '../../services/apiError';
 import { codeGeneratorService } from '../../services/codeGenerator.service';
 import { insuranceService } from '../../services/insurance.service';
-import { ActiveBadge, ReferenceExportActions, ReferenceHeader } from '../reference/reference-ui';
+import { ActiveBadge, ReferenceExportActions, ReferenceHeader, ReferenceSummary, summarizeActive } from '../reference/reference-ui';
 
 export function InsurancePlansPage() {
   const qc = useQueryClient();
@@ -25,6 +25,7 @@ export function InsurancePlansPage() {
   function openModal() { setCode(nextCode.data ?? ''); setModalOpen(true); }
   function submit(e: FormEvent<HTMLFormElement>) { e.preventDefault(); create.mutate({ organizationId, planCode, planName, coveragePercent: Number(coveragePercent) }); }
   const rows = filterRows(plans.data ?? [], search, (row) => [row.organizationName, row.planCode, row.planName, row.coveragePercent]);
+  const summary = summarizeActive(plans.data ?? []);
   const exportRows = useMemo(() => [['Organisation', 'Code', 'Nom plan', 'Couverture %', 'Statut'], ...rows.map((row) => [row.organizationName ?? '-', row.planCode, row.planName, row.coveragePercent, row.isActive ? 'Actif' : 'Inactif'])], [rows]);
   return (
     <>
@@ -32,6 +33,7 @@ export function InsurancePlansPage() {
         <div className="reference-actions"><ReferenceExportActions baseName="plans_assurance" sheetName="Plans assurance" rows={exportRows} jsonData={rows} disabled={rows.length === 0} />{can('insurance_plans.create') && <button className="button compact-button" onClick={openModal}>Nouveau plan assurance</button>}</div>
       </ReferenceHeader>
       {create.isError && <p className="form-error">{apiErrorMessage(create.error)}</p>}
+      <ReferenceSummary total={(plans.data ?? []).length} filtered={rows.length} active={summary.active} inactive={summary.inactive} />
       <Modal title="Nouveau plan assurance" open={modalOpen} onClose={() => setModalOpen(false)}>
         <form className="form-grid reference-form" onSubmit={submit}>
           <label><span>Organisation</span><select className="input compact-input" value={organizationId} onChange={(e) => setOrganizationId(e.target.value)} required><option value="">Organisation</option>{(organizations.data ?? []).filter((org) => org.isActive).map((org) => <option key={org.organizationId} value={org.organizationId}>{org.organizationName}</option>)}</select></label>
