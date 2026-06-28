@@ -1,10 +1,11 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Modal } from '../../components/Modal';
 import { SearchBox } from '../../components/SearchBox';
 import { filterRows } from '../../lib/search';
 import { codeGeneratorService } from '../../services/codeGenerator.service';
 import { sitesService } from '../../services/sites.service';
+import { AdminExportActions, AdminSummary } from '../administration/admin-ui';
 
 export function SitesPage() {
   const queryClient = useQueryClient();
@@ -36,10 +37,12 @@ export function SitesPage() {
     if (modalOpen && !siteCode && nextCode.data) setSiteCode(nextCode.data);
   }, [modalOpen, nextCode.data, siteCode]);
   const rows = filterRows(data ?? [], search, (site) => [site.siteCode, site.siteName, site.siteType]);
+  const exportRows = useMemo(() => [['Code', 'Nom', 'Type', 'Adresse', 'Telephone', 'Actif'], ...rows.map((site) => [site.siteCode, site.siteName, site.siteType, site.address ?? '-', site.phone ?? '-', site.isActive ? 'Oui' : 'Non'])], [rows]);
 
   return (
     <>
-      <div className="toolbar"><h1>Sites</h1><button className="button" onClick={() => setModalOpen(true)}>Nouveau site</button></div>
+      <div className="page-heading reference-heading"><div><h1>Sites</h1><p className="muted">Sites autorises pour les operations et le POS.</p></div><div className="reference-actions"><AdminExportActions baseName="sites" sheetName="Sites" rows={exportRows} jsonData={rows} disabled={rows.length === 0} /><button className="button compact-button" onClick={() => setModalOpen(true)}>Nouveau site</button></div></div>
+      <AdminSummary cards={[{ label: 'Total', value: data?.length ?? 0 }, { label: 'Actifs', value: (data ?? []).filter((site) => site.isActive).length }, { label: 'Inactifs', value: (data ?? []).filter((site) => !site.isActive).length }, { label: 'Filtres', value: rows.length }]} />
       <Modal title="Nouveau site" open={modalOpen} onClose={() => setModalOpen(false)}>
       <form className="form-grid" onSubmit={submit}>
         <input className="input" placeholder="Code" value={siteCode} onChange={(e) => setSiteCode(e.target.value)} required />

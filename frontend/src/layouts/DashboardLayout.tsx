@@ -22,10 +22,17 @@ export function DashboardLayout() {
       title: 'Administration',
       icon: 'AD',
       links: [
-        ['/users', 'Users', 'users.read'],
+        ['/users', 'Utilisateurs', 'users.read'],
         ['/roles', 'Roles', 'roles.read'],
         ['/permissions', 'Permissions', 'permissions.read'],
         ['/sites', 'Sites', 'sites.read'],
+        ['/administration/cash-registers', 'Caisses', 'cash_registers.read'],
+        ['/administration/general-settings', 'Parametres generaux', 'settings.exchange_rate.read'],
+        ['/settings/exchange-rate', 'Taux de change', 'settings.exchange_rate.read'],
+        ['/administration/numbering', 'Numerotation', 'articles.read'],
+        ['/administration/audit-logs', 'Journaux audit', 'audit.read'],
+        ['/administration/company', 'Entreprise', 'sites.read'],
+        ['/administration/backups', 'Sauvegardes', 'permissions.read'],
       ],
     },
     {
@@ -93,10 +100,18 @@ export function DashboardLayout() {
       ],
     },
     {
-      title: 'Parametres',
-      icon: 'PM',
+      title: 'Rapports',
+      icon: 'RP',
       links: [
-        ['/settings/exchange-rate', 'Taux de change', 'settings.exchange_rate.read'],
+        ['/reports', 'Centre de rapports', 'reports.dashboard'],
+        ['/reports/sales-report', 'Ventes', 'reports.sales'],
+        ['/reports/purchases-report', 'Achats', 'purchases.read'],
+        ['/reports/stocks-report', 'Stocks', 'reports.stock'],
+        ['/reports/inventories-report', 'Inventaires', 'inventories.read'],
+        ['/reports/fefo-report', 'FEFO', 'reports.expiry'],
+        ['/reports/cash-report', 'Caisse', 'reports.cash'],
+        ['/reports/insurance-report', 'Assurances', 'reports.receivables'],
+        ['/reports/margins-report', 'Marges', 'reports.margins'],
       ],
     },
   ], [permissions]);
@@ -129,20 +144,6 @@ export function DashboardLayout() {
           {groups.map((group) => {
             const visibleLinks = group.links.filter(([, , permission]) => !permission || permissions.includes(permission));
             if (visibleLinks.length === 0) return null;
-            if (group.title === 'Parametres') {
-              return (
-                <div className="nav-group" key={group.title}>
-                  <button className="nav-group-title nav-group-button" type="button" onClick={() => navigate(visibleLinks[0][0])}>
-                    <span>{group.icon}</span> {group.title}
-                  </button>
-                  {visibleLinks.map(([to, label]) => (
-                    <Link className="nav-link" key={to} to={to}>
-                      {label}
-                    </Link>
-                  ))}
-                </div>
-              );
-            }
             return (
               <details className="nav-group" key={group.title} open>
                 <summary className="nav-group-title"><span>{group.icon}</span> {group.title}</summary>

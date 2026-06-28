@@ -45,8 +45,25 @@ import { EntriesPage } from './modules/accounting/EntriesPage';
 import { GeneralLedgerPage } from './modules/accounting/GeneralLedgerPage';
 import { TrialBalancePage } from './modules/accounting/TrialBalancePage';
 import { ReportsDashboardPage } from './modules/reports/ReportsDashboardPage';
+import { ReportsIndexPage } from './modules/reports/ReportsIndexPage';
+import {
+  CashReportPage,
+  FefoReportPage,
+  InsuranceReportPage,
+  InventoriesReportPage,
+  MarginsReportPage,
+  PurchasesReportPage,
+  SalesReportPage,
+  StocksReportPage,
+} from './modules/reports/StandardReportPages';
 import { ProfilePage } from './modules/profile/ProfilePage';
 import { ExchangeRatePage } from './modules/settings/ExchangeRatePage';
+import { AuditLogsPage } from './modules/administration/AuditLogsPage';
+import { CashRegistersAdminPage } from './modules/administration/CashRegistersAdminPage';
+import { CompanySettingsPage } from './modules/administration/CompanySettingsPage';
+import { GeneralSettingsPage } from './modules/administration/GeneralSettingsPage';
+import { NumberingPage } from './modules/administration/NumberingPage';
+import { SystemBackupsPage } from './modules/administration/SystemBackupsPage';
 
 const queryClient = new QueryClient();
 
@@ -95,13 +112,27 @@ export function App() {
               <Route path="/accounting/entries" element={<EntriesPage />} />
               <Route path="/accounting/general-ledger" element={<GeneralLedgerPage />} />
               <Route path="/accounting/trial-balance" element={<TrialBalancePage />} />
-              <Route path="/reports" element={<Navigate to="/reports/dashboard" replace />} />
+              <Route path="/reports" element={<ReportsIndexPage />} />
               <Route path="/reports/dashboard" element={<ReportsDashboardPage />} />
+              <Route path="/reports/sales-report" element={<SalesReportPage />} />
+              <Route path="/reports/purchases-report" element={<PurchasesReportPage />} />
+              <Route path="/reports/stocks-report" element={<StocksReportPage />} />
+              <Route path="/reports/inventories-report" element={<InventoriesReportPage />} />
+              <Route path="/reports/fefo-report" element={<FefoReportPage />} />
+              <Route path="/reports/cash-report" element={<CashReportPage />} />
+              <Route path="/reports/insurance-report" element={<InsuranceReportPage />} />
+              <Route path="/reports/margins-report" element={<MarginsReportPage />} />
               <Route path="/settings/exchange-rate" element={<ExchangeRatePage />} />
               <Route path="/users" element={<UsersPage />} />
               <Route path="/roles" element={<RolesPage />} />
               <Route path="/permissions" element={<PermissionsPage />} />
               <Route path="/sites" element={<SitesPage />} />
+              <Route path="/administration/cash-registers" element={<CashRegistersAdminPage />} />
+              <Route path="/administration/general-settings" element={<GeneralSettingsPage />} />
+              <Route path="/administration/numbering" element={<NumberingPage />} />
+              <Route path="/administration/audit-logs" element={<AuditLogsPage />} />
+              <Route path="/administration/company" element={<CompanySettingsPage />} />
+              <Route path="/administration/backups" element={<SystemBackupsPage />} />
             </Route>
           </Routes>
         </BrowserRouter>

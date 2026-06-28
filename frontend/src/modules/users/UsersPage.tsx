@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Modal } from '../../components/Modal';
 import { SearchBox } from '../../components/SearchBox';
@@ -7,11 +7,15 @@ import { codeGeneratorService } from '../../services/codeGenerator.service';
 import { rolesService } from '../../services/roles.service';
 import { sitesService } from '../../services/sites.service';
 import { usersService } from '../../services/users.service';
+import { AdminExportActions, AdminSummary } from '../administration/admin-ui';
 
 export function UsersPage() {
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [siteFilter, setSiteFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -52,10 +56,18 @@ export function UsersPage() {
     create.mutate({ fullName, username, email, password, roleId, siteId });
   }
 
-  const rows = filterRows(users.data ?? [], search, (user) => [user.fullName, user.username, user.email, user.roleName, user.siteName]);
+  const rows = filterRows(users.data ?? [], search, (user) => [user.fullName, user.username, user.email, user.roleName, user.siteName])
+    .filter((user) => !roleFilter || user.roleId === roleFilter)
+    .filter((user) => !siteFilter || user.siteId === siteFilter)
+    .filter((user) => !statusFilter || String(user.isActive) === statusFilter);
+  const exportRows = useMemo(() => [['Nom', 'Username', 'Email', 'Role', 'Site', 'Actif'], ...rows.map((user) => [user.fullName, user.username, user.email ?? '-', user.roleName ?? '-', user.siteName ?? '-', user.isActive ? 'Oui' : 'Non'])], [rows]);
   return (
     <>
-      <div className="toolbar"><h1>Users</h1><button className="button" onClick={() => setModalOpen(true)}>Nouvel utilisateur</button></div>
+      <div className="page-heading reference-heading">
+        <div><h1>Utilisateurs</h1><p className="muted">Comptes, roles et sites rattaches.</p></div>
+        <div className="reference-actions"><AdminExportActions baseName="utilisateurs" sheetName="Utilisateurs" rows={exportRows} jsonData={rows} disabled={rows.length === 0} /><button className="button compact-button" onClick={() => setModalOpen(true)}>Nouvel utilisateur</button></div>
+      </div>
+      <AdminSummary cards={[{ label: 'Total', value: users.data?.length ?? 0 }, { label: 'Actifs', value: (users.data ?? []).filter((user) => user.isActive).length }, { label: 'Inactifs', value: (users.data ?? []).filter((user) => !user.isActive).length }, { label: 'Admins', value: (users.data ?? []).filter((user) => user.roleName === 'ADMIN').length }]} />
       <Modal title="Nouvel utilisateur" open={modalOpen} onClose={() => setModalOpen(false)}>
       <form className="form-grid" onSubmit={submit}>
         <input className="input" placeholder="Nom complet" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
@@ -73,7 +85,7 @@ export function UsersPage() {
         <button className="button" disabled={create.isPending}>Creer</button>
       </form>
       </Modal>
-      <div className="card"><SearchBox value={search} onChange={setSearch} placeholder="Rechercher un utilisateur..." /></div>
+      <div className="card reference-filters admin-user-filters"><SearchBox value={search} onChange={setSearch} placeholder="Rechercher un utilisateur..." /><select className="input compact-input" value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)}><option value="">Tous roles</option>{(roles.data ?? []).map((role) => <option key={role.roleId} value={role.roleId}>{role.roleName}</option>)}</select><select className="input compact-input" value={siteFilter} onChange={(event) => setSiteFilter(event.target.value)}><option value="">Tous sites</option>{(sites.data ?? []).map((site) => <option key={site.siteId} value={site.siteId}>{site.siteName}</option>)}</select><select className="input compact-input" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="">Tous statuts</option><option value="true">Actifs</option><option value="false">Inactifs</option></select></div>
       <div className="card">
         {users.isLoading ? <p className="loading-state">Chargement des utilisateurs...</p> : rows.length === 0 ? <p className="empty-state">Aucun utilisateur trouve.</p> : (
           <div className="table-wrap">

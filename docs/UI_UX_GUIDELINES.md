@@ -81,6 +81,17 @@ La page `/purchases/new` - Nouvel Achat - est desormais le modele UI/UX de refer
 - Les filtres principaux d'un dashboard sont : site, periode, date debut et date fin.
 - Les alertes du dashboard doivent orienter l'action : rupture, FEFO, lots expires, creances, caisse.
 
+## Rapports Imprimables
+
+- Le centre `/reports` regroupe les rapports metier imprimables et exportables.
+- Chaque rapport doit proposer : filtres, apercu avant impression, KPI de synthese, export Excel, CSV et JSON.
+- Le PDF reste desactive tant que la generation fiable n'est pas implementee.
+- L'impression utilise une zone dediee avec titre, pharmacie, site, periode, date d'impression, tableau, totaux et pied de page.
+- Les rapports doivent reutiliser les composants partages : `ReportPageShell`, `ReportFiltersBar`, `ReportPreview`, `ReportActions` et `ReportKpiCards`.
+- Les tableaux de rapport restent compacts, avec en-tetes lisibles, montants alignes a droite et dates au format `jj/mm/aaaa`.
+- Les exports respectent toujours les filtres actifs.
+- Les rapports prioritaires V1.1 sont : Ventes, Achats, Stocks, Inventaires, FEFO, Caisse, Assurances et Marges.
+
 ## Formulaires
 
 - Labels clairs pour chaque champ.
