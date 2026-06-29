@@ -8,6 +8,9 @@ Date: 28/06/2026
 - [ ] Schema PostgreSQL applique.
 - [ ] Migrations appliquees.
 - [ ] Seed staging/demo applique sans mot de passe clair.
+- [ ] Aucun script `validate:*` execute sur la base pilote.
+- [ ] Si la base a servi aux validations, executer `database/cleanup_validation_data.sql`.
+- [ ] Verifier que les articles `MVP-*`, `V1ART*`, `S5-*`, `S7-*`, `S8-*`, `S9-*`, `Sprint`, `Debug`, `Validation` sont absents.
 - [ ] Tenant pilote cree.
 - [ ] Site principal cree.
 - [ ] Role ADMIN cree.
@@ -51,7 +54,7 @@ Date: 28/06/2026
 - [ ] Login admin.
 - [ ] Dashboard BI visible.
 - [ ] Articles visibles.
-- [ ] Creation article test.
+- [ ] Articles reels/pilote visibles, sans donnees techniques de validation.
 - [ ] Achat multi-lignes.
 - [ ] Validation achat.
 - [ ] Lot cree.
@@ -81,7 +84,7 @@ Date: 28/06/2026
 ## 7. Conditions Go pilote
 
 - [ ] `npm run validate:rc1` OK sur environnement cible ou staging equivalent.
+- [ ] `npm run validate:rc1` non execute sur la base pilote finale.
 - [ ] Aucun bug critique ouvert.
 - [ ] Utilisateurs pilotes formes.
 - [ ] Limitations connues acceptees par le client pilote.
-

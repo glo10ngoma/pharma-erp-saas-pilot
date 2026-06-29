@@ -131,6 +131,10 @@ Ne pas modifier le schema sans justification.
 
 ## Validations
 
+Les validations automatiques creent des donnees techniques de test.
+
+Ne jamais executer ces commandes sur une base pilote ou production finale. Utiliser une base DEV/STAGING/TEST separee.
+
 Depuis `backend/` :
 
 ```bash
@@ -147,6 +151,20 @@ npm run build
 ```
 
 ## Troubleshooting
+
+## Preparation donnees pilote
+
+Avant une pharmacie pilote, utiliser une base propre.
+
+Si une base a deja servi aux validations, executer le script idempotent :
+
+```bash
+psql "$DATABASE_URL" -f database/cleanup_validation_data.sql
+```
+
+Le script nettoie uniquement les donnees techniques marquees validation (`MVP-*`, `V1ART*`, `S5-*`, `S7-*`, `S8-*`, `S9-*`, `Sprint`, `Debug`, `Validation`) et conserve les articles metier, utilisateurs, roles, permissions, sites et parametres.
+
+Voir aussi : `docs/pilot/PILOT_DATA_PREPARATION.md`.
 
 ### Login impossible
 
